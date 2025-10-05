@@ -24,13 +24,13 @@ Running the above steps generates all executables inside the `build` directory. 
 Linux:
 ```shell
 cd build
-./1-window
+./1_window
 ```
 
 Windows:
 ```shell
 cd build
-./1-window.exe
+./1_window.exe
 ```
 
 As of writing these steps, running these programs from the `build` directory is essential (except for `1-window`). Programs that use shaders read them at runtime from specific relative paths which break when running the programs from other directories.
