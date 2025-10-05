@@ -3,7 +3,10 @@ cmake_minimum_required (VERSION 3.5)
 project (grafika-komputerowa LANGUAGES CXX C)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}>)
+
+if(WIN32)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}>)
+endif()
 
 include_directories(
         dependencies/glew/include/
