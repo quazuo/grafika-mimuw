@@ -1,0 +1,46 @@
+#ifndef SHADER_H
+#define SHADER_H
+
+#include <filesystem>
+#include <unordered_map>
+
+#include <GL/glew.h>
+#include <glm/glm.hpp>
+
+class GLShaders {
+    GLuint programID;
+
+    std::unordered_map<std::string, GLint> uniformIDs {};
+
+public:
+    GLShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath);
+
+    [[nodiscard]]
+    GLuint getID() const { return programID; }
+
+    void enable() const;
+
+    void setUniform(const std::string& name, GLint value);
+
+    void setUniform(const std::string& name, float value);
+
+    void setUniform(const std::string& name, const glm::vec2& value);
+
+    void setUniform(const std::string& name, const glm::vec3& value);
+
+    void setUniform(const std::string& name, const glm::vec4& value);
+
+    void setUniform(const std::string& name, const glm::mat4& value);
+
+    void setUniform(const std::string& name, const std::vector<GLint>& value);
+
+    void setUniform(const std::string& name, const std::vector<float>& value);
+
+private:
+    [[nodiscard]]
+    GLint getUniformID(const std::string &name);
+
+    void compileShader(GLuint shaderKind, const std::filesystem::path &path) const;
+};
+
+#endif //SHADER_H
