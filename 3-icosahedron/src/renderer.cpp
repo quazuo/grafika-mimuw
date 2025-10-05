@@ -98,8 +98,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     shaders = std::make_unique<GLShaders>(
-        "../../3-icosahedron/shaders/main.vert",
-        "../../3-icosahedron/shaders/main.frag"
+        "../3-icosahedron/shaders/main.vert",
+        "../3-icosahedron/shaders/main.frag"
     );
 
     prepareBuffers();

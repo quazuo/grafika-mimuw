@@ -53,7 +53,10 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glfwSetWindowUserPointer(window, this);
 
-    shaders = std::make_unique<GLShaders>("../../2-triangle/shaders/main.vert", "../../2-triangle/shaders/main.frag");
+    shaders = std::make_unique<GLShaders>(
+        "../2-triangle/shaders/main.vert",
+        "../2-triangle/shaders/main.frag"
+    );
 
     prepareBuffers();
 }

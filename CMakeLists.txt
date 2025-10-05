@@ -2,7 +2,9 @@ cmake_minimum_required (VERSION 3.5)
 
 project (grafika-komputerowa LANGUAGES CXX C)
 
-set(CMAKE_TOOLCHAIN_FILE "C:/Users/PCx/Desktop/vcpkg/scripts/buildsystems/vcpkg.cmake")
+message(${CMAKE_BINARY_DIR})
+
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 include_directories(
         dependencies/glew/include/

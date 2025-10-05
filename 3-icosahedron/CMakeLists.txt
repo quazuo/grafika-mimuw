@@ -4,7 +4,6 @@ set(PROJECT_NAME 3-icosahedron)
 
 project(${PROJECT_NAME} LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_TOOLCHAIN_FILE "C:/Users/PCx/Desktop/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 find_package(OpenGL REQUIRED)
 
