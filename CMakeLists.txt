@@ -2,7 +2,11 @@ cmake_minimum_required (VERSION 3.5)
 
 project (grafika-komputerowa LANGUAGES CXX C)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}>)
+if(WIN32)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}>)
+else()
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+endif()
 
 include_directories(
         dependencies/glew/include/
@@ -29,6 +33,6 @@ add_definitions(
 
 add_subdirectory(dependencies)
 
-add_subdirectory(1_window)
-add_subdirectory(2_triangle)
-add_subdirectory(3_icosahedron)
+add_subdirectory(1-window)
+add_subdirectory(2-triangle)
+add_subdirectory(3-icosahedron)
