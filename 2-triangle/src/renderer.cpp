@@ -20,7 +20,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     // open a window and create its OpenGL context
-    window = glfwCreateWindow(windowWidth, windowHeight, "2-trojkat", nullptr, nullptr);
+    window = glfwCreateWindow(windowWidth, windowHeight, "2-triangle", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
