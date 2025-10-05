@@ -1,9 +1,9 @@
-[submodule "deps/glfw"]
-	path = deps/glfw
+[submodule "dependencies/glfw"]
+	path = dependencies/glfw
 	url = https://github.com/glfw/glfw
-[submodule "deps/glm"]
-	path = deps/glm
+[submodule "dependencies/glm"]
+	path = dependencies/glm
 	url = https://github.com/g-truc/glm
-[submodule "deps/imgui"]
-	path = deps/imgui
+[submodule "dependencies/imgui"]
+	path = dependencies/imgui
 	url = https://github.com/ocornut/imgui
