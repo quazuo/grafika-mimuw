@@ -54,8 +54,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     shaders = std::make_unique<GLShaders>(
-        "../2-triangle/shaders/main.vert",
-        "../2-triangle/shaders/main.frag"
+        "../2_triangle/shaders/main.vert",
+        "../2_triangle/shaders/main.frag"
     );
 
     prepareBuffers();
