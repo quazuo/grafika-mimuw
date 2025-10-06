@@ -7,14 +7,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(OpenGL REQUIRED)
 
-include_directories(
-        dependencies/glew/include/
-        dependencies/glfw/include/
-        dependencies/glm/
-        include/
-        ../
-)
-
 set(ALL_LIBS
         ${OPENGL_LIBRARY}
         glew
