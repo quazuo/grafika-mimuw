@@ -11,6 +11,8 @@
 OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
+    // hide the "old stuff" -- i.e. the immediate mode functions
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
@@ -25,30 +27,38 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         glfwTerminate();
         throw std::runtime_error("Failed to open GLFW window. Error: " + std::to_string(code) + " " + desc);
     }
+
+    // the OpenGL context for each window can be "current" on only one thread at a time;
+    // make it current on this thread
     glfwMakeContextCurrent(window);
 
-    glfwSwapInterval(0);
+    // enable VSync
+    glfwSwapInterval(1);
 
-    // Initialize GLEW
+    // initialize GLEW
     glewExperimental = true; // Needed for core profile
     if (glewInit() != GLEW_OK) {
         glfwTerminate();
         throw std::runtime_error("Failed to initialize GLEW");
     }
 
-    // Ensure we can capture the escape key being pressed below
+    // ensure we can capture keys being pressed
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-    glfwPollEvents();
-
+    // set the color of an empty window to black
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+    // enable debug information
     glEnable(GL_DEBUG_OUTPUT);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
 
+    // set callbacks for resizing
     glfwSetWindowRefreshCallback(window, windowRefreshCallback);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+
+    // attach a pointer to this render to the window
+    // this will allow the above callbacks to access the renderer
     glfwSetWindowUserPointer(window, this);
 }
 
@@ -58,11 +68,12 @@ OpenGLRenderer::~OpenGLRenderer() {
 }
 
 void OpenGLRenderer::startRendering() {
+    // clear the window, more on the arguments in the future
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void OpenGLRenderer::render() {
-    // nothing here yet
+    // nothing here yet! just an empty window for now
 }
 
 void OpenGLRenderer::finishRendering() const {

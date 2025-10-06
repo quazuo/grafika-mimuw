@@ -19,7 +19,6 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // open a window and create its OpenGL context
     window = glfwCreateWindow(windowWidth, windowHeight, "2-triangle", nullptr, nullptr);
     if (!window) {
         const char *desc;
@@ -29,19 +28,15 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     }
     glfwMakeContextCurrent(window);
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
-    // Initialize GLEW
     glewExperimental = true; // Needed for core profile
     if (glewInit() != GLEW_OK) {
         glfwTerminate();
         throw std::runtime_error("Failed to initialize GLEW");
     }
 
-    // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
-    glfwPollEvents();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -84,17 +79,17 @@ void OpenGLRenderer::finishRendering() const {
 
 void OpenGLRenderer::prepareBuffers() {
     const std::vector<Vertex> vertices {
-        { .position = { 0.5f, -0.5f, 0.0f}, .color = {1.0f, 0.0f, 0.0f} },
+        { .position = { 0.5f, -0.5f, 1.0f}, .color = {1.0f, 0.0f, 0.0f} },
         { .position = {-0.5f, -0.5f, 0.0f}, .color = {0.0f, 1.0f, 0.0f} },
         { .position = { 0.0f,  0.5f, 0.0f}, .color = {0.0f, 0.0f, 1.0f} }
     };
 
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
-
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
 
     glVertexAttribPointer(
         0,                          // index of configured vertex attribute (here: position)

@@ -14,7 +14,7 @@ static const float X = 0.525731112119133606;
 static const float Z = 0.850650808352039932;
 
 // These are the 12 vertices for the icosahedron
-static const std::vector<Vertex> vertices{
+const std::vector<Vertex> vertices{
     {{ -X, 0.0,   Z}, {1.0, 0.0, 0.0}},
     {{  X, 0.0,   Z}, {0.0, 1.0, 0.0}},
     {{ -X, 0.0,  -Z}, {0.0, 0.0, 1.0}},
@@ -29,7 +29,7 @@ static const std::vector<Vertex> vertices{
     {{ -Z,  -X, 0.0}, {0.0, 1.0, 1.0}},
 };
 
-static const std::vector<GLuint> indices{
+const std::vector<GLuint> indices{
     0, 4, 1,
     0, 9, 4,
     9, 5, 4,
@@ -61,7 +61,6 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // open a window and create its OpenGL context
     window = glfwCreateWindow(windowWidth, windowHeight, "3-icosahedron", nullptr, nullptr);
     if (!window) {
         const char *desc;
@@ -71,19 +70,15 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     }
     glfwMakeContextCurrent(window);
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
-    // Initialize GLEW
     glewExperimental = true; // Needed for core profile
     if (glewInit() != GLEW_OK) {
         glfwTerminate();
         throw std::runtime_error("Failed to initialize GLEW");
     }
 
-    // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
-    glfwPollEvents();
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
