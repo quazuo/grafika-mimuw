@@ -38,7 +38,9 @@ public:
 private:
     GLint getUniformID(const std::string &name);
 
-    void compileShader(GLuint shaderKind, const std::filesystem::path &path) const;
+    GLuint compileShader(GLuint shaderKind, const std::filesystem::path &path) const;
+
+    void linkProgram(GLuint vertexShader, GLuint fragmentShader);
 };
 
 #endif //SHADER_H

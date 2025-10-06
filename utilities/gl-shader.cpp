@@ -5,8 +5,11 @@
 
 GLShaders::GLShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath) {
     programID = glCreateProgram();
-    compileShader(GL_VERTEX_SHADER, vertexShaderPath);
-    compileShader(GL_FRAGMENT_SHADER, fragmentShaderPath);
+    const GLuint vertexShaderID = compileShader(GL_VERTEX_SHADER, vertexShaderPath);
+    const GLuint fragmentShaderID = compileShader(GL_FRAGMENT_SHADER, fragmentShaderPath);
+    linkProgram(vertexShaderID, fragmentShaderID);
+    glDeleteShader(vertexShaderID);
+    glDeleteShader(fragmentShaderID);
 }
 
 void GLShaders::enable() const {
@@ -68,11 +71,11 @@ GLint GLShaders::getUniformID(const std::string &name) {
     return id;
 }
 
-void GLShaders::compileShader(const GLuint shaderKind, const std::filesystem::path &path) const {
+GLuint GLShaders::compileShader(const GLuint shaderKind, const std::filesystem::path &path) const {
     // create the shaders
     GLuint shaderID = glCreateShader(shaderKind);
 
-    // read the vertex shader code from the file
+    // read the shader code from the file
     std::ifstream shaderStream(path, std::ios::in);
     if (!shaderStream.is_open()) {
         const std::string errorMessage = "Impossible to open shader file: " + absolute(path).string();
@@ -88,13 +91,13 @@ void GLShaders::compileShader(const GLuint shaderKind, const std::filesystem::pa
     GLint result = GL_FALSE;
     int infoLogLength;
 
-    // compile the vertex shader
+    // compile the shader
     std::cout << "Compiling shader: " << path.filename() << "\n";
     char const *vertexSourcePointer = shaderCode.c_str();
     glShaderSource(shaderID, 1, &vertexSourcePointer, nullptr);
     glCompileShader(shaderID);
 
-    // check the vertex shader
+    // check the shader
     glGetShaderiv(shaderID, GL_COMPILE_STATUS, &result);
     glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
     if (infoLogLength > 0) {
@@ -105,13 +108,18 @@ void GLShaders::compileShader(const GLuint shaderKind, const std::filesystem::pa
         throw std::runtime_error(errorMessage);
     }
 
-    // link the program
-    std::cout << "Linking shader: " << path.filename() << "\n";
+    return shaderID;
+}
 
-    glAttachShader(programID, shaderID);
+void GLShaders::linkProgram(const GLuint vertexShader, const GLuint fragmentShader) {
+    glAttachShader(programID, vertexShader);
+    glAttachShader(programID, fragmentShader);
     glLinkProgram(programID);
 
     // check the program
+    GLint result = GL_FALSE;
+    int infoLogLength;
+
     glGetProgramiv(programID, GL_LINK_STATUS, &result);
     glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &infoLogLength);
     if (infoLogLength > 0) {
@@ -121,7 +129,4 @@ void GLShaders::compileShader(const GLuint shaderKind, const std::filesystem::pa
         std::cerr << errorMessage;
         throw std::runtime_error(errorMessage);
     }
-
-    glDeleteShader(shaderID);
 }
-
