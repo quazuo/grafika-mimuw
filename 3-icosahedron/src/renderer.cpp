@@ -114,6 +114,7 @@ void OpenGLRenderer::startRendering() {
 
 void OpenGLRenderer::render() {
     shaders->enable();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 }
 

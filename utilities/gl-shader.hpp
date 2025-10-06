@@ -15,7 +15,6 @@ class GLShaders {
 public:
     GLShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath);
 
-    [[nodiscard]]
     GLuint getID() const { return programID; }
 
     void enable() const;
@@ -37,7 +36,6 @@ public:
     void setUniform(const std::string& name, const std::vector<float>& value);
 
 private:
-    [[nodiscard]]
     GLint getUniformID(const std::string &name);
 
     void compileShader(GLuint shaderKind, const std::filesystem::path &path) const;

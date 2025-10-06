@@ -1,7 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "GL/glew.h"
+#include "GL/glew.h" // include this *before* GLFW
 #include "GLFW/glfw3.h"
 
 class OpenGLRenderer {

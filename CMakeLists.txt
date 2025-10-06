@@ -8,6 +8,8 @@ else()
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()
 
+find_package(OpenGL REQUIRED)
+
 include_directories(
         dependencies/glew/include/
         dependencies/glfw/include/

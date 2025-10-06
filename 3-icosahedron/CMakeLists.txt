@@ -5,8 +5,6 @@ set(PROJECT_NAME 3_icosahedron)
 project(${PROJECT_NAME} LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(OpenGL REQUIRED)
-
 set(ALL_LIBS
         ${OPENGL_LIBRARY}
         glew

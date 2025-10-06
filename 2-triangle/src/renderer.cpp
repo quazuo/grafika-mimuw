@@ -69,6 +69,7 @@ void OpenGLRenderer::startRendering() {
 
 void OpenGLRenderer::render() {
     shaders->enable();
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe mode -- try it
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
