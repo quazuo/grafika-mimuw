@@ -42,7 +42,9 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 
     glEnable(GL_DEBUG_OUTPUT);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+#ifndef __APPLE__
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
+#endif
 
     glfwSetWindowRefreshCallback(window, windowRefreshCallback);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);

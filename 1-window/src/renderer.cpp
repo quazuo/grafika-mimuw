@@ -51,7 +51,9 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     // enable debug information
     glEnable(GL_DEBUG_OUTPUT);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-    //glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
+#ifndef __APPLE__
+    glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
+#endif
 
     // set callbacks for resizing
     glfwSetWindowRefreshCallback(window, windowRefreshCallback);
