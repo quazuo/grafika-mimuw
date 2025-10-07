@@ -2,6 +2,8 @@
 #define SHADER_H
 
 #include <filesystem>
+#include <unordered_map>
+#include <vector>
 #include <map>
 
 #include <GL/glew.h>
