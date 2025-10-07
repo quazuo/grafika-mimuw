@@ -17,5 +17,8 @@ file(GLOB SOURCES
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+    
+        target_compile_options(${PROJECT_NAME} PRIVATE -std=c++17 -stdlib=libc++)
+        target_link_options(${PROJECT_NAME} PRIVATE -stdlib=libc++)
 
 target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
