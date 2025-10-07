@@ -2,15 +2,16 @@
 #define SHADER_H
 
 #include <filesystem>
-#include <unordered_map>
+#include <map>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <sstream>
 
 class GLShaders {
     GLuint programID;
 
-    std::unordered_map<std::string, GLint> uniformIDs {};
+    std::map<std::string, GLint> uniformIDs {};
 
 public:
     GLShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath);

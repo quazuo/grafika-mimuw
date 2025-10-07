@@ -51,7 +51,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     // enable debug information
     glEnable(GL_DEBUG_OUTPUT);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-    glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
+    //glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
 
     // set callbacks for resizing
     glfwSetWindowRefreshCallback(window, windowRefreshCallback);
