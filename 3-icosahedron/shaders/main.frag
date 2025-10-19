@@ -1,4 +1,4 @@
-#version 450
+#version 410
 
 in vec3 color; // this *has* to match the "out vec3 color" in the vertex shader!
 

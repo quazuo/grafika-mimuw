@@ -1,4 +1,4 @@
-#version 450
+#version 410
 
 // names here are irrelevant, but we'll prefix them with "in" for clarity
 layout (location = 0) in vec3 in_position;
