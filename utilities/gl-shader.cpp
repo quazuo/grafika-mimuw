@@ -111,7 +111,7 @@ GLuint GLShaders::compileShader(const GLuint shaderKind, const std::filesystem::
     return shaderID;
 }
 
-void GLShaders::linkProgram(const GLuint vertexShader, const GLuint fragmentShader) {
+void GLShaders::linkProgram(const GLuint vertexShader, const GLuint fragmentShader) const {
     glAttachShader(programID, vertexShader);
     glAttachShader(programID, fragmentShader);
     glLinkProgram(programID);

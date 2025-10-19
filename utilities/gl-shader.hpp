@@ -40,7 +40,7 @@ private:
 
     GLuint compileShader(GLuint shaderKind, const std::filesystem::path &path) const;
 
-    void linkProgram(GLuint vertexShader, GLuint fragmentShader);
+    void linkProgram(GLuint vertexShader, GLuint fragmentShader) const;
 };
 
 #endif //SHADER_H
