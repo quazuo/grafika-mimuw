@@ -89,7 +89,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    glEnable(GL_DEPTH_TEST); // try removing this line to see what happens
+    glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_DEBUG_OUTPUT);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
