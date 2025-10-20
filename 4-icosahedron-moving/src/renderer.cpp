@@ -147,6 +147,20 @@ void OpenGLRenderer::tickInputEvents() {
     constexpr float half_pi = glm::pi<float>() / 2.0f;
     constexpr float eps = 0.001f;
     cameraRotation.y = glm::clamp(cameraRotation.y, -half_pi + eps, half_pi - eps);
+
+    // reload shaders
+    static bool wasPressedLastFrame = false;
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        if (!wasPressedLastFrame) {
+            shaders = std::make_unique<GLShaders>(
+                "../4-icosahedron-moving/shaders/main.vert",
+                "../4-icosahedron-moving/shaders/main.frag"
+            );
+        }
+        wasPressedLastFrame = true;
+    } else {
+        wasPressedLastFrame = false;
+    }
 }
 
 void OpenGLRenderer::startRendering() {
