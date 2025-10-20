@@ -18,7 +18,6 @@ class OpenGLRenderer {
     GLuint vao;
     GLuint ebo;
 
-    bool is_free_camera = false;
     glm::vec3 cameraPosition { 0, 0, -3 };
     glm::vec2 cameraRotation { 0, 0 };
 

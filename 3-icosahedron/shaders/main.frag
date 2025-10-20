@@ -1,8 +1,8 @@
 #version 410
 
-in vec3 color; // this *has* to match the "out vec3 color" in the vertex shader!
+in vec3 color;
 
-out vec4 out_color; // this is the final color which will land on the screen
+out vec4 out_color;
 
 void main() {
     out_color = vec4(color, 1.0f);

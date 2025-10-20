@@ -19,19 +19,19 @@ static const float Z = 0.850650808352039932f;
 
 // These are the 12 vertices for the icosahedron
 const std::vector<Vertex> vertices{
-//   position         color
-    {{ -X, 0.0,   Z}, {1.0, 0.0, 0.0}},
-    {{  X, 0.0,   Z}, {0.0, 1.0, 0.0}},
-    {{ -X, 0.0,  -Z}, {0.0, 0.0, 1.0}},
-    {{  X, 0.0,  -Z}, {1.0, 1.0, 0.0}},
-    {{0.0,   Z,   X}, {1.0, 0.0, 1.0}},
-    {{0.0,   Z,  -X}, {0.0, 1.0, 1.0}},
-    {{0.0,  -Z,   X}, {1.0, 0.0, 0.0}},
-    {{0.0,  -Z,  -X}, {0.0, 1.0, 0.0}},
-    {{  Z,   X, 0.0}, {0.0, 0.0, 1.0}},
-    {{ -Z,   X, 0.0}, {1.0, 1.0, 0.0}},
-    {{  Z,  -X, 0.0}, {1.0, 0.0, 1.0}},
-    {{ -Z,  -X, 0.0}, {0.0, 1.0, 1.0}},
+//   position         color            normal
+    {{ -X, 0.0,   Z}, {1.0, 0.0, 0.0}, glm::normalize(glm::vec3({ -X, 0.0,   Z}))},
+    {{  X, 0.0,   Z}, {0.0, 1.0, 0.0}, glm::normalize(glm::vec3({  X, 0.0,   Z}))},
+    {{ -X, 0.0,  -Z}, {0.0, 0.0, 1.0}, glm::normalize(glm::vec3({ -X, 0.0,  -Z}))},
+    {{  X, 0.0,  -Z}, {1.0, 1.0, 0.0}, glm::normalize(glm::vec3({  X, 0.0,  -Z}))},
+    {{0.0,   Z,   X}, {1.0, 0.0, 1.0}, glm::normalize(glm::vec3({0.0,   Z,   X}))},
+    {{0.0,   Z,  -X}, {0.0, 1.0, 1.0}, glm::normalize(glm::vec3({0.0,   Z,  -X}))},
+    {{0.0,  -Z,   X}, {1.0, 0.0, 0.0}, glm::normalize(glm::vec3({0.0,  -Z,   X}))},
+    {{0.0,  -Z,  -X}, {0.0, 1.0, 0.0}, glm::normalize(glm::vec3({0.0,  -Z,  -X}))},
+    {{  Z,   X, 0.0}, {0.0, 0.0, 1.0}, glm::normalize(glm::vec3({  Z,   X, 0.0}))},
+    {{ -Z,   X, 0.0}, {1.0, 1.0, 0.0}, glm::normalize(glm::vec3({ -Z,   X, 0.0}))},
+    {{  Z,  -X, 0.0}, {1.0, 0.0, 1.0}, glm::normalize(glm::vec3({  Z,  -X, 0.0}))},
+    {{ -Z,  -X, 0.0}, {0.0, 1.0, 1.0}, glm::normalize(glm::vec3({ -Z,  -X, 0.0}))},
 };
 
 // each of these triples is a triangle
@@ -68,7 +68,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = { windowWidth, windowHeight };
-    window = glfwCreateWindow(windowWidth, windowHeight, "4-icosahedron-moving", nullptr, nullptr);
+    window = glfwCreateWindow(windowWidth, windowHeight, "5-lighting", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -100,8 +100,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     shaders = std::make_unique<GLShaders>(
-        "../4-icosahedron-moving/shaders/main.vert",
-        "../4-icosahedron-moving/shaders/main.frag"
+        "../5-lighting/shaders/main.vert",
+        "../5-lighting/shaders/main.frag"
     );
 
     prepareBuffers();
@@ -157,6 +157,7 @@ void OpenGLRenderer::render() {
     shaders->setUniform("model", glm::identity<glm::mat4>());
     shaders->setUniform("view", getViewMatrix());
     shaders->setUniform("projection", glm::perspective(glm::radians(fieldOfView), aspectRatio, zNear, zFar));
+    shaders->setUniform("light_direction", glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f)));
 
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 }
@@ -197,6 +198,16 @@ void OpenGLRenderer::prepareBuffers() {
         reinterpret_cast<void *>(offsetof(Vertex, color))
     );
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(
+        2,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(Vertex),
+        reinterpret_cast<void *>(offsetof(Vertex, normal))
+    );
+    glEnableVertexAttribArray(2);
 }
 
 glm::mat4 OpenGLRenderer::getViewMatrix() const {
