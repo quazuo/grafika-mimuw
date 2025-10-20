@@ -5,7 +5,7 @@ layout (location = 1) in vec3 in_color;
 layout (location = 2) in vec3 in_normal;
 
 out vec3 color;
-out vec3 normal; // normals are interpolated! this might not be intended (for flat shading)
+out vec3 normal; // normals are interpolated! this might not be intended in certain cases (e.g. in flat shading)
 
 uniform mat4 model;
 uniform mat4 view;
