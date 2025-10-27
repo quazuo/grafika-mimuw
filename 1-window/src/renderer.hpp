@@ -35,12 +35,6 @@ public:
 
 private:
     /**
-     * Debug callback used by GLFW to notify the user of errors.
-     */
-    static void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-                              const GLchar *message, const void *userParam);
-
-    /**
      * Function called by GLFW whenever the window is refreshed.
      */
     static void windowRefreshCallback(GLFWwindow *window);

@@ -45,12 +45,6 @@ public:
 private:
     void prepareBuffers();
 
-    /**
-     * Debug callback used by GLFW to notify the user of errors.
-     */
-    static void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-                              const GLchar *message, const void *userParam);
-
     static void windowRefreshCallback(GLFWwindow *window);
 
     static void framebufferSizeCallback(GLFWwindow *window, int width, int height);
