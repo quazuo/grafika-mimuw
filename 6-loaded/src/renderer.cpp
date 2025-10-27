@@ -14,53 +14,9 @@
 
 #include <stb_image.h>
 
+#include <tiny_obj_loader.h>
+
 #include "vertex.hpp"
-
-// we'll move to a simple cube for a moment
-const std::vector<Vertex> vertices{
-//   position               uv
-    {{-1.0f, -1.0f, -1.0f}, {1.0f, 1.0f}},
-    {{ 1.0f, -1.0f, -1.0f}, {0.0f, 1.0f}},
-    {{ 1.0f,  1.0f, -1.0f}, {0.0f, 0.0f}},
-    {{ 1.0f,  1.0f, -1.0f}, {0.0f, 0.0f}},
-    {{-1.0f,  1.0f, -1.0f}, {1.0f, 0.0f}},
-    {{-1.0f, -1.0f, -1.0f}, {1.0f, 1.0f}},
-
-    {{-1.0f, -1.0f,  1.0f}, {0.0f, 1.0f}},
-    {{ 1.0f, -1.0f,  1.0f}, {1.0f, 1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}, {1.0f, 0.0f}},
-    {{ 1.0f,  1.0f,  1.0f}, {1.0f, 0.0f}},
-    {{-1.0f,  1.0f,  1.0f}, {0.0f, 0.0f}},
-    {{-1.0f, -1.0f,  1.0f}, {0.0f, 1.0f}},
-
-    {{-1.0f,  1.0f,  1.0f}, {1.0f, 0.0f}},
-    {{-1.0f,  1.0f, -1.0f}, {0.0f, 0.0f}},
-    {{-1.0f, -1.0f, -1.0f}, {0.0f, 1.0f}},
-    {{-1.0f, -1.0f, -1.0f}, {0.0f, 1.0f}},
-    {{-1.0f, -1.0f,  1.0f}, {1.0f, 1.0f}},
-    {{-1.0f,  1.0f,  1.0f}, {1.0f, 0.0f}},
-
-    {{ 1.0f,  1.0f,  1.0f}, {0.0f, 0.0f}},
-    {{ 1.0f,  1.0f, -1.0f}, {1.0f, 0.0f}},
-    {{ 1.0f, -1.0f, -1.0f}, {1.0f, 1.0f}},
-    {{ 1.0f, -1.0f, -1.0f}, {1.0f, 1.0f}},
-    {{ 1.0f, -1.0f,  1.0f}, {0.0f, 1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}, {0.0f, 0.0f}},
-
-    {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}},
-    {{ 1.0f, -1.0f, -1.0f}, {0.0f, 0.0f}},
-    {{ 1.0f, -1.0f,  1.0f}, {0.0f, 1.0f}},
-    {{ 1.0f, -1.0f,  1.0f}, {0.0f, 1.0f}},
-    {{-1.0f, -1.0f,  1.0f}, {1.0f, 1.0f}},
-    {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}},
-
-    {{-1.0f,  1.0f, -1.0f}, {1.0f, 1.0f}},
-    {{ 1.0f,  1.0f, -1.0f}, {0.0f, 1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}, {0.0f, 0.0f}},
-    {{ 1.0f,  1.0f,  1.0f}, {0.0f, 0.0f}},
-    {{-1.0f,  1.0f,  1.0f}, {1.0f, 0.0f}},
-    {{-1.0f,  1.0f, -1.0f}, {1.0f, 1.0f}},
-};
 
 OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -72,8 +28,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    windowSize = { windowWidth, windowHeight };
-    window = glfwCreateWindow(windowWidth, windowHeight, "5-textured", nullptr, nullptr);
+    windowSize = {windowWidth, windowHeight};
+    window     = glfwCreateWindow(windowWidth, windowHeight, "6-loaded", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -106,12 +62,13 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     shaders = std::make_unique<GLShaders>(
-        "../5-textured/shaders/main.vert",
-        "../5-textured/shaders/main.frag"
+        "../6-loaded/shaders/main.vert",
+        "../6-loaded/shaders/main.frag"
     );
 
     camera = std::make_unique<Camera>(window);
 
+    loadMesh();
     prepareBuffers();
 
     loadTextures();
@@ -132,8 +89,8 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             shaders = std::make_unique<GLShaders>(
-                "../5-textured/shaders/main.vert",
-                "../5-textured/shaders/main.frag"
+                "../6-loaded/shaders/main.vert",
+                "../6-loaded/shaders/main.frag"
             );
         }
         wasPressedLastFrame = true;
@@ -149,12 +106,12 @@ void OpenGLRenderer::startRendering() {
 void OpenGLRenderer::render() {
     shaders->enable();
 
-    shaders->setUniform("model", glm::identity<glm::mat4>());
+    shaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(10.0f)));
     shaders->setUniform("view", camera->getViewMatrix());
     shaders->setUniform("projection", camera->getPerspectiveMatrix());
-    shaders->setUniform("colorTexture", 0); // the texture is in slot 0 (GL_TEXTURE0) so that's what we set the uniform to
+    shaders->setUniform("colorTexture", 0);
 
-    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+    glDrawElements(GL_TRIANGLES, meshIndices.size(), GL_UNSIGNED_INT, 0);
 }
 
 void OpenGLRenderer::finishRendering() const {
@@ -168,7 +125,11 @@ void OpenGLRenderer::prepareBuffers() {
 
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * meshVertices.size(), meshVertices.data(), GL_STATIC_DRAW);
+
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * meshIndices.size(), meshIndices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(
         0,
@@ -192,14 +153,16 @@ void OpenGLRenderer::prepareBuffers() {
 }
 
 void OpenGLRenderer::loadTextures() {
+    stbi_set_flip_vertically_on_load(true); // needed as the y-axis (or rather the v coordinate) is flipped
+
     int width, height, channelCount;
-    unsigned char *data = stbi_load("../assets/textures/uvtest.png", &width, &height, &channelCount, 0);
+    unsigned char *data = stbi_load("../assets/textures/kettle-albedo.png", &width, &height, &channelCount, 0);
     if (!data) {
         throw std::runtime_error("failed to load texture!");
     }
 
     glGenTextures(1, &colorTextureID);
-    glActiveTexture(GL_TEXTURE0); // there are guaranteed 16 slots from GL_TEXTURE0 to GL_TEXTURE16; we put this texture in slot 0
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, colorTextureID);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -207,14 +170,78 @@ void OpenGLRenderer::loadTextures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // border color used when we set either of the GL_TEXTURE_WRAP_* to GL_CLAMP_TO_BORDER
-    float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+    float borderColor[] = {1.0f, 1.0f, 0.0f, 1.0f};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     stbi_image_free(data);
+}
+
+void OpenGLRenderer::loadMesh() {
+    tinyobj::ObjReaderConfig reader_config{};
+    tinyobj::ObjReader reader{};
+
+    if (!reader.ParseFromFile("../assets/meshes/kettle.obj", reader_config)) {
+        if (!reader.Error().empty()) {
+            std::cerr << "TinyObjReader: " << reader.Error();
+        }
+
+        throw std::runtime_error("failed to load mesh with tinyobjloader");
+    }
+
+    if (!reader.Warning().empty()) {
+        std::cout << "TinyObjReader: " << reader.Warning();
+    }
+
+    auto &attrib = reader.GetAttrib();
+    auto &shapes = reader.GetShapes();
+
+    std::unordered_map<Vertex, GLuint> vertexToIndexMapping;
+
+    // Loop over shapes (there's only one in kettle.obj)
+    for (const auto &shape : shapes) {
+        size_t indexOffset = 0;
+        size_t nextFreeIndex = 0;
+
+        for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
+            const size_t numFaceVertices = static_cast<size_t>(shape.mesh.num_face_vertices[f]);
+
+            // Loop over vertices in the face.
+            for (size_t v = 0; v < numFaceVertices; v++) {
+                const tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
+                const glm::vec3 position = {
+                    attrib.vertices[3 * idx.vertex_index + 0],
+                    attrib.vertices[3 * idx.vertex_index + 1],
+                    attrib.vertices[3 * idx.vertex_index + 2]
+                };
+
+                // Check if `texcoord_index` is zero or positive. negative = no texcoord data
+                if (idx.texcoord_index < 0) {
+                    throw std::runtime_error("no texcoord index in mesh");
+                }
+
+                const glm::vec2 uv = {
+                    attrib.texcoords[2 * idx.texcoord_index + 0],
+                    attrib.texcoords[2 * idx.texcoord_index + 1]
+                };
+
+                const Vertex newVertex { position, uv };
+
+                if (vertexToIndexMapping.contains(newVertex)) {
+                    meshIndices.emplace_back(vertexToIndexMapping.at(newVertex));
+                } else {
+                    const GLuint index = nextFreeIndex++;
+                    vertexToIndexMapping.emplace(newVertex, index);
+                    meshVertices.push_back(newVertex);
+                    meshIndices.emplace_back(index);
+                }
+            }
+
+            indexOffset += numFaceVertices;
+        }
+    }
 }
 
 void OpenGLRenderer::debugCallback(const GLenum source, const GLenum type, const GLuint id, const GLenum severity,
