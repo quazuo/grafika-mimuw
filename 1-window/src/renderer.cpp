@@ -15,6 +15,9 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     // hide the "old stuff" -- i.e. the immediate mode functions
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    // enable the "debug context" -- this will enable OpenGL to give us nice messages when errors occur
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -50,7 +53,6 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 
     // enable debug information
     glEnable(GL_DEBUG_OUTPUT);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 #ifndef __APPLE__
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
 #endif
