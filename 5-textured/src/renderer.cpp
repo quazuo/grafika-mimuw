@@ -1,16 +1,14 @@
 #include "renderer.hpp"
 
 #include <stdexcept>
-#include <sstream>
-#include <iostream>
-#include <ranges>
+#include <vector>
+#include <string>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
 
 #include <stb_image.h>
 

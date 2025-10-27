@@ -1,9 +1,8 @@
 #include "renderer.hpp"
 
 #include <stdexcept>
-#include <sstream>
-#include <iostream>
-#include <ranges>
+#include <vector>
+#include <string>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
