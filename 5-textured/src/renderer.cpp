@@ -110,6 +110,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         "../5-textured/shaders/main.frag"
     );
 
+    camera = std::make_unique<Camera>(window);
+
     prepareBuffers();
 
     loadTextures();
@@ -123,35 +125,7 @@ OpenGLRenderer::~OpenGLRenderer() {
 }
 
 void OpenGLRenderer::tickInputEvents() {
-    const glm::vec3 front = {
-        std::cos(cameraRotation.y) * std::sin(cameraRotation.x),
-        std::sin(cameraRotation.y),
-        std::cos(cameraRotation.y) * std::cos(cameraRotation.x)
-    };
-
-    const glm::vec3 right = glm::vec3(
-        std::sin(cameraRotation.x - 3.14f / 2.0f),
-        0,
-        std::cos(cameraRotation.x - 3.14f / 2.0f)
-    );
-
-    const glm::vec3 up = glm::cross(right, front);
-
-    if (glfwGetKey(window, GLFW_KEY_W)          == GLFW_PRESS) cameraPosition += front * movementSpeed;
-    if (glfwGetKey(window, GLFW_KEY_S)          == GLFW_PRESS) cameraPosition -= front * movementSpeed;
-    if (glfwGetKey(window, GLFW_KEY_A)          == GLFW_PRESS) cameraPosition -= right * movementSpeed;
-    if (glfwGetKey(window, GLFW_KEY_D)          == GLFW_PRESS) cameraPosition += right * movementSpeed;
-    if (glfwGetKey(window, GLFW_KEY_SPACE)      == GLFW_PRESS) cameraPosition += up    * movementSpeed;
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) cameraPosition -= up    * movementSpeed;
-
-    if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) cameraRotation.x += rotationSpeed;
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) cameraRotation.x -= rotationSpeed;
-    if (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) cameraRotation.y += rotationSpeed;
-    if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) cameraRotation.y -= rotationSpeed;
-
-    constexpr float half_pi = glm::pi<float>() / 2.0f;
-    constexpr float eps = 0.001f;
-    cameraRotation.y = glm::clamp(cameraRotation.y, -half_pi + eps, half_pi - eps);
+    camera->tickInputEvents();
 
     // reload shaders
     static bool wasPressedLastFrame = false;
@@ -176,8 +150,8 @@ void OpenGLRenderer::render() {
     shaders->enable();
 
     shaders->setUniform("model", glm::identity<glm::mat4>());
-    shaders->setUniform("view", getViewMatrix());
-    shaders->setUniform("projection", glm::perspective(glm::radians(fieldOfView), aspectRatio, zNear, zFar));
+    shaders->setUniform("view", camera->getViewMatrix());
+    shaders->setUniform("projection", camera->getPerspectiveMatrix());
     shaders->setUniform("colorTexture", 0); // the texture is in slot 0 (GL_TEXTURE0) so that's what we set the uniform to
 
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
@@ -241,16 +215,6 @@ void OpenGLRenderer::loadTextures() {
     glGenerateMipmap(GL_TEXTURE_2D);
 
     stbi_image_free(data);
-}
-
-glm::mat4 OpenGLRenderer::getViewMatrix() const {
-    const glm::vec3 front = {
-        std::cos(cameraRotation.y) * std::sin(cameraRotation.x),
-        std::sin(cameraRotation.y),
-        std::cos(cameraRotation.y) * std::cos(cameraRotation.x)
-    };
-
-    return glm::lookAt(cameraPosition, cameraPosition + front, glm::vec3(0, 1, 0));
 }
 
 void OpenGLRenderer::debugCallback(const GLenum source, const GLenum type, const GLuint id, const GLenum severity,
