@@ -208,10 +208,19 @@ void OpenGLRenderer::loadTextures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // border color used when we set either of the GL_TEXTURE_WRAP_* to GL_CLAMP_TO_BORDER
-    float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
+    constexpr float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(
+        GL_TEXTURE_2D,    // target bind point -- we called glBindTexture(GL_TEXTURE_2D, ...) so we pick GL_TEXTURE_2D
+        0,                // mipmap layer -- when loading images we always load into the first layer and generate the rest
+        GL_RGB,           // internal format -- for simplicity it's just RGB, but we can e.g. specify bit lengths for components
+        width, height,    // width and height of the texture
+        0,                // must be 0 for legacy reasons
+        GL_RGB,           // format of the provided data -- the provided texture has 3 channels, so it's in RGB (could be e.g. RGBA if 4 channels)
+        GL_UNSIGNED_BYTE, // type of each channel's data -- typically textures have 8-bit unsigned int channels, but some are different (e.g. HDR)
+        data              // pointer to the data
+    );
     glGenerateMipmap(GL_TEXTURE_2D);
 
     stbi_image_free(data);
