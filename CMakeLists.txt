@@ -19,6 +19,7 @@ include_directories(
         dependencies/glew/include/
         dependencies/glfw/include/
         dependencies/glm/
+        dependencies/stb/
         utilities/
         .
 )
@@ -44,4 +45,4 @@ add_subdirectory(1-window)
 add_subdirectory(2-triangle)
 add_subdirectory(3-icosahedron)
 add_subdirectory(4-icosahedron-moving)
-add_subdirectory(5-lighting)
+add_subdirectory(5-textured)
