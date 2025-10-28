@@ -52,6 +52,10 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 
     glEnable(GL_DEPTH_TEST);
 
+    // face culling -- to optimize the rendering process a little bit
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);

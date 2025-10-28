@@ -154,6 +154,17 @@ void OpenGLRenderer::render() {
     shaders->setUniform("colorTexture", 0); // the texture is in slot 0 (GL_TEXTURE0) so that's what we set the uniform to
 
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+    shaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(1, 2, 3)));
+
+    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+    // z-fighting
+    // shaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(1, 0, 0)));
+
+    shaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(5, 0, 1)));
+
+    glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 }
 
 void OpenGLRenderer::finishRendering() const {
