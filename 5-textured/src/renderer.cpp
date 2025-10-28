@@ -94,6 +94,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS); // this is the default -- can be changed
 
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
