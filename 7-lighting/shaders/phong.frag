@@ -32,7 +32,7 @@ vec3 calc_directional_light() {
 
     vec3 light_direction = normalize(-directional_light.direction);
     vec3 view_direction_norm = normalize(view_direction);
-    vec3 reflect_direction = reflect(-light_direction, normal);
+    vec3 reflect_direction = normalize(reflect(-light_direction, normal));
 
     float ambient_factor = 0.03f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
@@ -42,7 +42,7 @@ vec3 calc_directional_light() {
     vec3 diffuse = diffuse_factor * directional_light.color * base_color;
     vec3 specular = specular_factor * directional_light.color;
 
-    return ambient + diffuse + specular;
+    return specular; // ambient + diffuse + specular;
 }
 
 vec3 calc_point_light() {
@@ -50,7 +50,7 @@ vec3 calc_point_light() {
 
     vec3 light_direction = normalize(point_light.position - position);
     vec3 view_direction_norm = normalize(view_direction);
-    vec3 reflect_direction = reflect(-light_direction, normal);
+    vec3 reflect_direction = normalize(reflect(-light_direction, normal));
 
     float distance = length(point_light.position - position);
     float attenuation = 1.0f / (point_light.att_constant
@@ -65,7 +65,7 @@ vec3 calc_point_light() {
     vec3 diffuse = diffuse_factor * point_light.color * base_color;
     vec3 specular = specular_factor * point_light.color;
 
-    return attenuation * (ambient + diffuse + specular);
+    return attenuation * specular; // (ambient + diffuse + specular);
 }
 
 void main() {
