@@ -162,9 +162,6 @@ void OpenGLRenderer::startRendering() {
 void OpenGLRenderer::render() {
     const float time = glfwGetTime();
 
-    glBindVertexArray(lightCubeMesh.vao);
-    lightCubeShaders->enable();
-
     constexpr float lightCubeScale = 0.05f;
     constexpr float lightOrbitRadius = 3.0f;
     constexpr float timeScale = 1.0f;
@@ -175,35 +172,42 @@ void OpenGLRenderer::render() {
     };
     const glm::vec3 pointLightColor { 1.0f, 0.0f, 0.0f };
 
-    lightCubeShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePosition)
-                                          * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
-    lightCubeShaders->setUniform("view", camera->getViewMatrix());
-    lightCubeShaders->setUniform("projection", camera->getPerspectiveMatrix());
+    {
+        glBindVertexArray(lightCubeMesh.vao);
+        lightCubeShaders->enable();
 
-    lightCubeShaders->setUniform("color", pointLightColor);
+        lightCubeShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePosition)
+                                              * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
+        lightCubeShaders->setUniform("view", camera->getViewMatrix());
+        lightCubeShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
-    glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
+        lightCubeShaders->setUniform("color", pointLightColor);
 
-    glBindVertexArray(loadedMesh.vao);
-    mainShaders->enable();
+        glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
+    }
 
-    mainShaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(2.0f)));
-    mainShaders->setUniform("view", camera->getViewMatrix());
-    mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
+    {
+        glBindVertexArray(loadedMesh.vao);
+        mainShaders->enable();
 
-    mainShaders->setUniform("color_texture", 0);
-    mainShaders->setUniform("view_direction", glm::normalize(camera->getPosition()));
+        mainShaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(2.0f)));
+        mainShaders->setUniform("view", camera->getViewMatrix());
+        mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
-    mainShaders->setUniform("directional_light.direction", glm::normalize(glm::vec3(-1, -2, -3)));
-    mainShaders->setUniform("directional_light.color", glm::normalize(glm::vec3(1, 0.9, 0.8)));
+        mainShaders->setUniform("color_texture", 0);
+        mainShaders->setUniform("view_direction", glm::normalize(camera->getPosition()));
 
-    mainShaders->setUniform("point_light.position", lightCubePosition);
-    mainShaders->setUniform("point_light.color", pointLightColor);
-    mainShaders->setUniform("point_light.att_constant", 1.0f);
-    mainShaders->setUniform("point_light.att_linear", 0.22f);
-    mainShaders->setUniform("point_light.att_quadratic", 0.2f);
+        mainShaders->setUniform("directional_light.direction", glm::normalize(glm::vec3(-1, -2, -3)));
+        mainShaders->setUniform("directional_light.color", glm::normalize(glm::vec3(1, 0.9, 0.8)));
 
-    glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
+        mainShaders->setUniform("point_light.position", lightCubePosition);
+        mainShaders->setUniform("point_light.color", pointLightColor);
+        mainShaders->setUniform("point_light.att_constant", 1.0f);
+        mainShaders->setUniform("point_light.att_linear", 0.22f);
+        mainShaders->setUniform("point_light.att_quadratic", 0.2f);
+
+        glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
+    }
 }
 
 void OpenGLRenderer::finishRendering() const {
