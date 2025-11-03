@@ -29,7 +29,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = {windowWidth, windowHeight};
-    window     = glfwCreateWindow(windowWidth, windowHeight, "6-loaded", nullptr, nullptr);
+    window     = glfwCreateWindow(windowWidth, windowHeight, "7-lighting", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -66,8 +66,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     shaders = std::make_unique<GLShaders>(
-        "../6-loaded/shaders/main.vert",
-        "../6-loaded/shaders/main.frag"
+        "../7-lighting/shaders/main.vert",
+        "../7-lighting/shaders/main.frag"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -93,8 +93,8 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             shaders = std::make_unique<GLShaders>(
-                "../6-loaded/shaders/main.vert",
-                "../6-loaded/shaders/main.frag"
+                "../7-lighting/shaders/main.vert",
+                "../7-lighting/shaders/main.frag"
             );
         }
         wasPressedLastFrame = true;
@@ -115,6 +115,7 @@ void OpenGLRenderer::render() {
     shaders->setUniform("view", camera->getViewMatrix());
     shaders->setUniform("projection", camera->getPerspectiveMatrix());
     shaders->setUniform("color_texture", 0);
+    shaders->setUniform("light_direction", glm::normalize(glm::vec3(1, 2, 3)));
 
     glDrawElements(GL_TRIANGLES, meshIndices.size(), GL_UNSIGNED_INT, 0);
 }
@@ -155,6 +156,16 @@ void OpenGLRenderer::prepareBuffers() {
         reinterpret_cast<void *>(offsetof(Vertex, tex_coords))
     );
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(
+        2,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(Vertex),
+        reinterpret_cast<void *>(offsetof(Vertex, normal))
+    );
+    glEnableVertexAttribArray(2);
 }
 
 void OpenGLRenderer::loadTextures() {
@@ -229,7 +240,18 @@ void OpenGLRenderer::loadMesh() {
                     attrib.texcoords[2 * idx.texcoord_index + 1]
                 };
 
-                const Vertex newVertex { position, uv };
+                // Check if `normal_index` is zero or positive. negative = no normals data
+                if (idx.normal_index < 0) {
+                    throw std::runtime_error("no normals in loaded mesh");
+                }
+
+                const glm::vec3 normal = {
+                    attrib.normals[3 * idx.normal_index + 0],
+                    attrib.normals[3 * idx.normal_index + 1],
+                    attrib.normals[3 * idx.normal_index + 2]
+                };
+
+                const Vertex newVertex { position, uv, normal };
 
                 if (vertexToIndexMapping.contains(newVertex)) {
                     meshIndices.emplace_back(vertexToIndexMapping.at(newVertex));

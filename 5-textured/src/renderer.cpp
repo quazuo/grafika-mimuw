@@ -197,7 +197,7 @@ void OpenGLRenderer::prepareBuffers() {
         GL_FLOAT,
         GL_FALSE,
         sizeof(Vertex),
-        reinterpret_cast<void *>(offsetof(Vertex, uv))
+        reinterpret_cast<void *>(offsetof(Vertex, tex_coords))
     );
     glEnableVertexAttribArray(1);
 }

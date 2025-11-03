@@ -14,7 +14,7 @@ class Camera {
 
     float aspectRatio = 4.0f / 3.0f;
     float fieldOfView = 80.0f;
-    float zNear = 0.1f;
+    float zNear = 0.01f;
     float zFar = 500.0f;
 
     float movementSpeed = 0.01f;

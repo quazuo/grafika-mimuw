@@ -7,6 +7,8 @@
 #include "GLFW/glfw3.h"
 
 #include "utilities/gl-shader.hpp"
+#include "camera.hpp"
+#include "vertex.hpp"
 
 class OpenGLRenderer {
     glm::ivec2 windowSize;
@@ -14,20 +16,16 @@ class OpenGLRenderer {
 
     std::unique_ptr<GLShaders> shaders;
 
+    std::vector<Vertex> meshVertices;
+    std::vector<GLuint> meshIndices;
     GLuint vbo;
     GLuint vao;
     GLuint ebo;
 
-    glm::vec3 cameraPosition { 0, 0, -3 };
-    glm::vec2 cameraRotation { 0, 0 };
+    GLuint colorTextureID;
 
-    float aspectRatio = 4.0f / 3.0f;
-    float fieldOfView = 80.0f;
-    float zNear = 0.1f;
-    float zFar = 500.0f;
-
-    float movementSpeed = 0.01f;
-    float rotationSpeed = 0.006f;
+    // camera stuff won't change too much; we're moving it to a separate class to avoid clutter
+    std::unique_ptr<Camera> camera;
 
 public:
     OpenGLRenderer(int windowWidth, int windowHeight);
@@ -62,13 +60,9 @@ public:
 private:
     void prepareBuffers();
 
-    glm::mat4 getViewMatrix() const;
+    void loadTextures();
 
-    /**
-     * Debug callback used by GLFW to notify the user of errors.
-     */
-    static void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
-                              const GLchar *message, const void *userParam);
+    void loadMesh();
 
     static void windowRefreshCallback(GLFWwindow *window);
 
