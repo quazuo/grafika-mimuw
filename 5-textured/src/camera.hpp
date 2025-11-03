@@ -31,6 +31,8 @@ public:
      * Processes all pending input events, e.g. to move and rotate the camera.
      */
     void tickInputEvents();
+
+    void updateAspectRatio();
 };
 
 #endif //CAMERA_HPP

@@ -241,6 +241,7 @@ void OpenGLRenderer::loadTextures() {
 void OpenGLRenderer::windowRefreshCallback(GLFWwindow *window) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     OpenGLRenderer *renderer = static_cast<OpenGLRenderer *>(glfwGetWindowUserPointer(window));
+    renderer->camera->updateAspectRatio();
     renderer->render();
     glfwSwapBuffers(window);
     glFinish(); // important, this waits until rendering result is actually visible, thus making resizing less ugly

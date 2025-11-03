@@ -48,3 +48,9 @@ void Camera::tickInputEvents() {
     constexpr float eps = 0.001f;
     rotation.y = glm::clamp(rotation.y, -half_pi + eps, half_pi - eps);
 }
+
+void Camera::updateAspectRatio() {
+    glm::ivec2 windowSize;
+    glfwGetWindowSize(window, &windowSize.x, &windowSize.y);
+    if (windowSize.y != 0) aspectRatio = static_cast<float>(windowSize.x) / windowSize.y;
+}
