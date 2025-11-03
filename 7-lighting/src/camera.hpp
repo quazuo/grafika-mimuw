@@ -23,6 +23,8 @@ class Camera {
 public:
     Camera(GLFWwindow* w) : window(w) {}
 
+    glm::vec3 getPosition() const { return position; }
+
     glm::mat4 getViewMatrix() const;
 
     glm::mat4 getPerspectiveMatrix() const;

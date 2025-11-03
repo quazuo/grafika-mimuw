@@ -4,6 +4,7 @@ layout (location = 0) in vec3 in_position;
 layout (location = 1) in vec2 in_tex_coords;
 layout (location = 2) in vec3 in_normal;
 
+out vec3 position;
 out vec2 tex_coords;
 out vec3 normal; // normals are interpolated! this might not be intended in certain cases (e.g. in flat shading)
 
@@ -14,6 +15,7 @@ uniform vec3 light_direction;
 
 void main() {
     gl_Position = projection * view * model * vec4(in_position, 1.0);
+    position = in_position;
     tex_coords = in_tex_coords;
     normal = in_normal;
 }

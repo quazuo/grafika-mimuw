@@ -18,6 +18,50 @@
 #include "utilities/debug.hpp"
 #include "vertex.hpp"
 
+const std::vector<BasicVertex> cubeVertices{
+    {{-1.0f, -1.0f, -1.0f}},
+    {{ 1.0f, -1.0f, -1.0f}},
+    {{ 1.0f,  1.0f, -1.0f}},
+    {{ 1.0f,  1.0f, -1.0f}},
+    {{-1.0f,  1.0f, -1.0f}},
+    {{-1.0f, -1.0f, -1.0f}},
+
+    {{-1.0f, -1.0f,  1.0f}},
+    {{ 1.0f, -1.0f,  1.0f}},
+    {{ 1.0f,  1.0f,  1.0f}},
+    {{ 1.0f,  1.0f,  1.0f}},
+    {{-1.0f,  1.0f,  1.0f}},
+    {{-1.0f, -1.0f,  1.0f}},
+
+    {{-1.0f,  1.0f,  1.0f}},
+    {{-1.0f,  1.0f, -1.0f}},
+    {{-1.0f, -1.0f, -1.0f}},
+    {{-1.0f, -1.0f, -1.0f}},
+    {{-1.0f, -1.0f,  1.0f}},
+    {{-1.0f,  1.0f,  1.0f}},
+
+    {{ 1.0f,  1.0f,  1.0f}},
+    {{ 1.0f,  1.0f, -1.0f}},
+    {{ 1.0f, -1.0f, -1.0f}},
+    {{ 1.0f, -1.0f, -1.0f}},
+    {{ 1.0f, -1.0f,  1.0f}},
+    {{ 1.0f,  1.0f,  1.0f}},
+
+    {{-1.0f, -1.0f, -1.0f}},
+    {{ 1.0f, -1.0f, -1.0f}},
+    {{ 1.0f, -1.0f,  1.0f}},
+    {{ 1.0f, -1.0f,  1.0f}},
+    {{-1.0f, -1.0f,  1.0f}},
+    {{-1.0f, -1.0f, -1.0f}},
+
+    {{-1.0f,  1.0f, -1.0f}},
+    {{ 1.0f,  1.0f, -1.0f}},
+    {{ 1.0f,  1.0f,  1.0f}},
+    {{ 1.0f,  1.0f,  1.0f}},
+    {{-1.0f,  1.0f,  1.0f}},
+    {{-1.0f,  1.0f, -1.0f}},
+};
+
 OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -54,7 +98,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 
     // face culling -- to optimize the rendering process a little bit
     glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
 
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
@@ -65,9 +109,13 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glfwSetWindowUserPointer(window, this);
 
-    shaders = std::make_unique<GLShaders>(
-        "../7-lighting/shaders/main.vert",
-        "../7-lighting/shaders/main.frag"
+    mainShaders = std::make_unique<GLShaders>(
+        "../7-lighting/shaders/blinn-phong.vert",
+        "../7-lighting/shaders/blinn-phong.frag"
+    );
+    lightCubeShaders = std::make_unique<GLShaders>(
+        "../7-lighting/shaders/basic-color.vert",
+        "../7-lighting/shaders/basic-color.frag"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -79,8 +127,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 }
 
 OpenGLRenderer::~OpenGLRenderer() {
-    glDeleteBuffers(1, &vbo);
-    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &loadedMesh.vbo);
+    glDeleteVertexArrays(1, &loadedMesh.vao);
     glfwDestroyWindow(window);
     glfwTerminate();
 }
@@ -92,9 +140,13 @@ void OpenGLRenderer::tickInputEvents() {
     static bool wasPressedLastFrame = false;
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
-            shaders = std::make_unique<GLShaders>(
-                "../7-lighting/shaders/main.vert",
-                "../7-lighting/shaders/main.frag"
+            mainShaders = std::make_unique<GLShaders>(
+                "../7-lighting/shaders/blinn-phong.vert",
+                "../7-lighting/shaders/blinn-phong.frag"
+            );
+            lightCubeShaders = std::make_unique<GLShaders>(
+                "../7-lighting/shaders/basic-color.vert",
+                "../7-lighting/shaders/basic-color.frag"
             );
         }
         wasPressedLastFrame = true;
@@ -108,16 +160,50 @@ void OpenGLRenderer::startRendering() {
 }
 
 void OpenGLRenderer::render() {
-    shaders->enable();
+    const float time = glfwGetTime();
 
-    // the loaded mesh is actually really small so we'll scale it up for convenience
-    shaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(10.0f)));
-    shaders->setUniform("view", camera->getViewMatrix());
-    shaders->setUniform("projection", camera->getPerspectiveMatrix());
-    shaders->setUniform("color_texture", 0);
-    shaders->setUniform("light_direction", glm::normalize(glm::vec3(1, 2, 3)));
+    glBindVertexArray(lightCubeMesh.vao);
+    lightCubeShaders->enable();
 
-    glDrawElements(GL_TRIANGLES, meshIndices.size(), GL_UNSIGNED_INT, 0);
+    constexpr float lightCubeScale = 0.05f;
+    constexpr float lightOrbitRadius = 3.0f;
+    constexpr float timeScale = 1.0f;
+    const auto lightCubePosition = lightOrbitRadius * glm::vec3 {
+        glm::sin(time * timeScale),
+        0.0f,
+        glm::cos(time * timeScale)
+    };
+    const glm::vec3 pointLightColor { 1.0f, 0.0f, 0.0f };
+
+    lightCubeShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePosition)
+                                          * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
+    lightCubeShaders->setUniform("view", camera->getViewMatrix());
+    lightCubeShaders->setUniform("projection", camera->getPerspectiveMatrix());
+
+    lightCubeShaders->setUniform("color", pointLightColor);
+
+    glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
+
+    glBindVertexArray(loadedMesh.vao);
+    mainShaders->enable();
+
+    mainShaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(2.0f)));
+    mainShaders->setUniform("view", camera->getViewMatrix());
+    mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
+
+    mainShaders->setUniform("color_texture", 0);
+    mainShaders->setUniform("view_direction", glm::normalize(camera->getPosition()));
+
+    mainShaders->setUniform("directional_light.direction", glm::normalize(glm::vec3(-1, -2, -3)));
+    mainShaders->setUniform("directional_light.color", glm::normalize(glm::vec3(1, 0.9, 0.8)));
+
+    mainShaders->setUniform("point_light.position", lightCubePosition);
+    mainShaders->setUniform("point_light.color", pointLightColor);
+    mainShaders->setUniform("point_light.att_constant", 1.0f);
+    mainShaders->setUniform("point_light.att_linear", 0.22f);
+    mainShaders->setUniform("point_light.att_quadratic", 0.2f);
+
+    glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
 }
 
 void OpenGLRenderer::finishRendering() const {
@@ -126,24 +212,26 @@ void OpenGLRenderer::finishRendering() const {
 }
 
 void OpenGLRenderer::prepareBuffers() {
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    // loaded mesh
 
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * meshVertices.size(), meshVertices.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &loadedMesh.vao);
+    glBindVertexArray(loadedMesh.vao);
 
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * meshIndices.size(), meshIndices.data(), GL_STATIC_DRAW);
+    glGenBuffers(1, &loadedMesh.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, loadedMesh.vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(MeshVertex) * loadedMeshVertices.size(), loadedMeshVertices.data(), GL_STATIC_DRAW);
+
+    glGenBuffers(1, &loadedMesh.ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, loadedMesh.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * loadedMeshIndices.size(), loadedMeshIndices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(
         0,
         3,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(Vertex),
-        reinterpret_cast<void *>(offsetof(Vertex, position))
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, position))
     );
     glEnableVertexAttribArray(0);
 
@@ -152,8 +240,8 @@ void OpenGLRenderer::prepareBuffers() {
         2,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(Vertex),
-        reinterpret_cast<void *>(offsetof(Vertex, tex_coords))
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, tex_coords))
     );
     glEnableVertexAttribArray(1);
 
@@ -162,17 +250,36 @@ void OpenGLRenderer::prepareBuffers() {
         3,
         GL_FLOAT,
         GL_FALSE,
-        sizeof(Vertex),
-        reinterpret_cast<void *>(offsetof(Vertex, normal))
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, normal))
     );
     glEnableVertexAttribArray(2);
+
+    // light cube mesh
+
+    glGenVertexArrays(1, &lightCubeMesh.vao);
+    glBindVertexArray(lightCubeMesh.vao);
+
+    glGenBuffers(1, &lightCubeMesh.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, lightCubeMesh.vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(BasicVertex) * cubeVertices.size(), cubeVertices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(BasicVertex),
+        reinterpret_cast<void *>(offsetof(BasicVertex, position))
+    );
+    glEnableVertexAttribArray(0);
 }
 
 void OpenGLRenderer::loadTextures() {
     stbi_set_flip_vertically_on_load(true); // needed as the y-axis (or rather the v coordinate) is flipped
 
     int width, height, channelCount;
-    unsigned char *data = stbi_load("../assets/textures/kettle-albedo.png", &width, &height, &channelCount, 0);
+    unsigned char *data = stbi_load("../assets/textures/helmet-albedo.jpg", &width, &height, &channelCount, 0);
     if (!data) {
         throw std::runtime_error("failed to load texture!");
     }
@@ -186,7 +293,7 @@ void OpenGLRenderer::loadTextures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     stbi_image_free(data);
@@ -196,7 +303,7 @@ void OpenGLRenderer::loadMesh() {
     tinyobj::ObjReaderConfig reader_config{};
     tinyobj::ObjReader reader{};
 
-    if (!reader.ParseFromFile("../assets/meshes/kettle.obj", reader_config)) {
+    if (!reader.ParseFromFile("../assets/meshes/helmet.obj", reader_config)) {
         if (!reader.Error().empty()) {
             std::cerr << "TinyObjReader: " << reader.Error();
         }
@@ -211,7 +318,7 @@ void OpenGLRenderer::loadMesh() {
     auto &attrib = reader.GetAttrib();
     auto &shapes = reader.GetShapes();
 
-    std::unordered_map<Vertex, GLuint> vertexToIndexMapping;
+    std::unordered_map<MeshVertex, GLuint> vertexToIndexMapping;
 
     // Loop over shapes (there's only one in kettle.obj)
     for (const auto &shape : shapes) {
@@ -251,15 +358,15 @@ void OpenGLRenderer::loadMesh() {
                     attrib.normals[3 * idx.normal_index + 2]
                 };
 
-                const Vertex newVertex { position, uv, normal };
+                const MeshVertex newVertex { position, uv, normal };
 
                 if (vertexToIndexMapping.contains(newVertex)) {
-                    meshIndices.emplace_back(vertexToIndexMapping.at(newVertex));
+                    loadedMeshIndices.emplace_back(vertexToIndexMapping.at(newVertex));
                 } else {
                     const GLuint index = nextFreeIndex++;
                     vertexToIndexMapping.emplace(newVertex, index);
-                    meshVertices.push_back(newVertex);
-                    meshIndices.emplace_back(index);
+                    loadedMeshVertices.push_back(newVertex);
+                    loadedMeshIndices.emplace_back(index);
                 }
             }
 

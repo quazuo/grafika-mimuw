@@ -10,17 +10,22 @@
 #include "camera.hpp"
 #include "vertex.hpp"
 
+struct Mesh {
+    GLuint vbo = 0;
+    GLuint vao = 0;
+    GLuint ebo = 0;
+};
+
 class OpenGLRenderer {
     glm::ivec2 windowSize;
     GLFWwindow *window;
 
-    std::unique_ptr<GLShaders> shaders;
+    std::unique_ptr<GLShaders> mainShaders, lightCubeShaders;
 
-    std::vector<Vertex> meshVertices;
-    std::vector<GLuint> meshIndices;
-    GLuint vbo;
-    GLuint vao;
-    GLuint ebo;
+    std::vector<MeshVertex> loadedMeshVertices;
+    std::vector<GLuint> loadedMeshIndices;
+    Mesh loadedMesh;
+    Mesh lightCubeMesh;
 
     GLuint colorTextureID;
 

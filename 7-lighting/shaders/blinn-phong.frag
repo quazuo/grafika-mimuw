@@ -1,0 +1,74 @@
+#version 410
+
+in vec3 position;
+in vec2 tex_coords;
+in vec3 normal;
+
+out vec4 out_color;
+
+uniform sampler2D color_texture;
+uniform vec3 view_direction;
+
+struct DirectionalLight {
+    vec3 direction;
+    vec3 color;
+};
+
+struct PointLight {
+    vec3 position;
+    vec3 color;
+
+    // attenuation knobs
+    float att_constant;
+    float att_linear;
+    float att_quadratic;
+};
+
+uniform DirectionalLight directional_light;
+uniform PointLight point_light;
+
+vec3 calc_directional_light() {
+    vec3 base_color = texture(color_texture, tex_coords).rgb;
+
+    vec3 light_direction = normalize(-directional_light.direction);
+    vec3 view_direction_norm = normalize(view_direction);
+    vec3 reflect_direction = reflect(-light_direction, normal);
+
+    float ambient_factor = 0.03f;
+    float diffuse_factor = max(dot(normal, light_direction), 0.0f);
+    float specular_factor = pow(max(dot(view_direction_norm, reflect_direction), 0.0f), 5.0f);
+
+    vec3 ambient = ambient_factor * base_color;
+    vec3 diffuse = diffuse_factor * directional_light.color * base_color;
+    vec3 specular = specular_factor * directional_light.color;
+
+    return ambient + diffuse + specular;
+}
+
+vec3 calc_point_light() {
+    vec3 base_color = texture(color_texture, tex_coords).rgb;
+
+    vec3 light_direction = normalize(point_light.position - position);
+    vec3 view_direction_norm = normalize(view_direction);
+    vec3 reflect_direction = reflect(-light_direction, normal);
+
+    float distance = length(point_light.position - position);
+    float attenuation = 1.0f / (point_light.att_constant
+                                + point_light.att_linear * distance
+                                + point_light.att_quadratic * distance * distance);
+
+    float ambient_factor = 0.03f;
+    float diffuse_factor = max(dot(normal, light_direction), 0.0f);
+    float specular_factor = pow(max(dot(view_direction_norm, reflect_direction), 0.0f), 5.0f);
+
+    vec3 ambient = ambient_factor * base_color;
+    vec3 diffuse = diffuse_factor * point_light.color * base_color;
+    vec3 specular = specular_factor * point_light.color;
+
+    return attenuation * (ambient + diffuse + specular);
+}
+
+void main() {
+    vec3 color = calc_directional_light() + calc_point_light();
+    out_color = vec4(color, 1.0f);
+}
