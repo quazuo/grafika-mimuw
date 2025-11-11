@@ -161,7 +161,7 @@ void OpenGLRenderer::loadTextures() {
     stbi_set_flip_vertically_on_load(true); // needed as the y-axis (or rather the v coordinate) is flipped
 
     int width, height, channelCount;
-    unsigned char *data = stbi_load("../assets/textures/kettle-albedo.png", &width, &height, &channelCount, 0);
+    unsigned char *data = stbi_load("../assets/kettle/albedo.png", &width, &height, &channelCount, 0);
     if (!data) {
         throw std::runtime_error("failed to load texture!");
     }
@@ -185,7 +185,7 @@ void OpenGLRenderer::loadMesh() {
     tinyobj::ObjReaderConfig reader_config{};
     tinyobj::ObjReader reader{};
 
-    if (!reader.ParseFromFile("../assets/meshes/kettle.obj", reader_config)) {
+    if (!reader.ParseFromFile("../assets/kettle/kettle.obj", reader_config)) {
         if (!reader.Error().empty()) {
             std::cerr << "TinyObjReader: " << reader.Error();
         }

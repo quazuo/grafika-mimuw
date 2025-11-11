@@ -19,11 +19,11 @@
 #include "vertex.hpp"
 
 const std::vector<BasicVertex> cubeVertices{
-    {{-1.0f, -1.0f, -1.0f}},
     {{ 1.0f, -1.0f, -1.0f}},
-    {{ 1.0f,  1.0f, -1.0f}},
+    {{-1.0f, -1.0f, -1.0f}},
     {{ 1.0f,  1.0f, -1.0f}},
     {{-1.0f,  1.0f, -1.0f}},
+    {{ 1.0f,  1.0f, -1.0f}},
     {{-1.0f, -1.0f, -1.0f}},
 
     {{-1.0f, -1.0f,  1.0f}},
@@ -40,11 +40,11 @@ const std::vector<BasicVertex> cubeVertices{
     {{-1.0f, -1.0f,  1.0f}},
     {{-1.0f,  1.0f,  1.0f}},
 
-    {{ 1.0f,  1.0f,  1.0f}},
     {{ 1.0f,  1.0f, -1.0f}},
-    {{ 1.0f, -1.0f, -1.0f}},
+    {{ 1.0f,  1.0f,  1.0f}},
     {{ 1.0f, -1.0f, -1.0f}},
     {{ 1.0f, -1.0f,  1.0f}},
+    {{ 1.0f, -1.0f, -1.0f}},
     {{ 1.0f,  1.0f,  1.0f}},
 
     {{-1.0f, -1.0f, -1.0f}},
@@ -54,11 +54,11 @@ const std::vector<BasicVertex> cubeVertices{
     {{-1.0f, -1.0f,  1.0f}},
     {{-1.0f, -1.0f, -1.0f}},
 
-    {{-1.0f,  1.0f, -1.0f}},
     {{ 1.0f,  1.0f, -1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}},
+    {{-1.0f,  1.0f, -1.0f}},
     {{ 1.0f,  1.0f,  1.0f}},
     {{-1.0f,  1.0f,  1.0f}},
+    {{ 1.0f,  1.0f,  1.0f}},
     {{-1.0f,  1.0f, -1.0f}},
 };
 
@@ -96,9 +96,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 
     glEnable(GL_DEPTH_TEST);
 
-    // face culling -- to optimize the rendering process a little bit
     glCullFace(GL_BACK);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
@@ -283,7 +282,7 @@ void OpenGLRenderer::loadTextures() {
     stbi_set_flip_vertically_on_load(true); // needed as the y-axis (or rather the v coordinate) is flipped
 
     int width, height, channelCount;
-    unsigned char *data = stbi_load("../assets/textures/helmet-albedo.png", &width, &height, &channelCount, 0);
+    unsigned char *data = stbi_load("../assets/helmet/albedo.png", &width, &height, &channelCount, 0);
     if (!data) {
         throw std::runtime_error("failed to load texture!");
     }
@@ -307,7 +306,7 @@ void OpenGLRenderer::loadMesh() {
     tinyobj::ObjReaderConfig reader_config{};
     tinyobj::ObjReader reader{};
 
-    if (!reader.ParseFromFile("../assets/meshes/helmet.obj", reader_config)) {
+    if (!reader.ParseFromFile("../assets/helmet/helmet.obj", reader_config)) {
         if (!reader.Error().empty()) {
             std::cerr << "TinyObjReader: " << reader.Error();
         }
