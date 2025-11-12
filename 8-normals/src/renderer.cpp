@@ -173,7 +173,7 @@ void OpenGLRenderer::render() {
     const glm::vec3 pointLightColor { 1.0f, 0.0f, 0.0f };
 
     {
-        glBindVertexArray(lightCubeMesh.vao);
+        glBindVertexArray(cubeMesh.vao);
         lightCubeShaders->enable();
 
         lightCubeShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePosition)
@@ -282,11 +282,11 @@ void OpenGLRenderer::prepareBuffers() {
 
     // light cube mesh
 
-    glGenVertexArrays(1, &lightCubeMesh.vao);
-    glBindVertexArray(lightCubeMesh.vao);
+    glGenVertexArrays(1, &cubeMesh.vao);
+    glBindVertexArray(cubeMesh.vao);
 
-    glGenBuffers(1, &lightCubeMesh.vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, lightCubeMesh.vbo);
+    glGenBuffers(1, &cubeMesh.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeMesh.vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(BasicVertex) * cubeVertices.size(), cubeVertices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(

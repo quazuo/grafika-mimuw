@@ -20,7 +20,9 @@ class OpenGLRenderer {
     glm::ivec2 windowSize;
     GLFWwindow *window;
 
-    std::unique_ptr<GLShaders> mainShaders, lightCubeShaders;
+    std::unique_ptr<GLShaders> mainShaders;
+    std::unique_ptr<GLShaders>lightCubeShaders;
+    std::unique_ptr<GLShaders> skyboxShaders;
 
     std::vector<MeshVertex> loadedMeshVertices;
     std::vector<GLuint> loadedMeshIndices;
@@ -29,6 +31,7 @@ class OpenGLRenderer {
 
     GLuint colorTextureID;
     GLuint normalTextureID;
+    GLuint cubemapTextureID;
 
     // camera stuff won't change too much; we're moving it to a separate class to avoid clutter
     std::unique_ptr<Camera> camera;

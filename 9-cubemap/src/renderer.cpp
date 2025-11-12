@@ -73,7 +73,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = {windowWidth, windowHeight};
-    window     = glfwCreateWindow(windowWidth, windowHeight, "7-lighting", nullptr, nullptr);
+    window     = glfwCreateWindow(windowWidth, windowHeight, "9-cubemap", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -109,17 +109,22 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLShaders>(
-        "../7-lighting/shaders/phong.vert",
-        "../7-lighting/shaders/phong.frag"
+        "../9-cubemap/shaders/phong.vert",
+        "../9-cubemap/shaders/phong.frag"
     );
     lightCubeShaders = std::make_unique<GLShaders>(
-        "../7-lighting/shaders/basic-color.vert",
-        "../7-lighting/shaders/basic-color.frag"
+        "../9-cubemap/shaders/basic-color.vert",
+        "../9-cubemap/shaders/basic-color.frag"
+    );
+    skyboxShaders = std::make_unique<GLShaders>(
+        "../9-cubemap/shaders/skybox.vert",
+        "../9-cubemap/shaders/skybox.frag"
     );
 
     camera = std::make_unique<Camera>(window);
 
     loadMesh();
+    calculateTbnVectors();
     prepareBuffers();
 
     loadTextures();
@@ -140,12 +145,16 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLShaders>(
-                "../7-lighting/shaders/phong.vert",
-                "../7-lighting/shaders/phong.frag"
+                "../9-cubemap/shaders/phong.vert",
+                "../9-cubemap/shaders/phong.frag"
             );
             lightCubeShaders = std::make_unique<GLShaders>(
-                "../7-lighting/shaders/basic-color.vert",
-                "../7-lighting/shaders/basic-color.frag"
+                "../9-cubemap/shaders/basic-color.vert",
+                "../9-cubemap/shaders/basic-color.frag"
+            );
+            skyboxShaders = std::make_unique<GLShaders>(
+                "../9-cubemap/shaders/skybox.vert",
+                "../9-cubemap/shaders/skybox.frag"
             );
         }
         wasPressedLastFrame = true;
@@ -194,6 +203,7 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
         mainShaders->setUniform("color_texture", 0);
+        mainShaders->setUniform("normal_texture", 1);
         mainShaders->setUniform("view_direction", glm::normalize(camera->getPosition()));
 
         mainShaders->setUniform("directional_light.direction", glm::normalize(glm::vec3(-1, -2, -3)));
@@ -206,6 +216,24 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("point_light.att_quadratic", 0.2f);
 
         glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
+    }
+
+    {
+        glDisable(GL_CULL_FACE);
+        glDepthFunc(GL_LEQUAL);
+
+        glBindVertexArray(cubeMesh.vao);
+        skyboxShaders->enable();
+
+        skyboxShaders->setUniform("view", camera->getSkyboxViewMatrix());
+        skyboxShaders->setUniform("projection", camera->getPerspectiveMatrix());
+
+        skyboxShaders->setUniform("cubemap_texture", 2);
+
+        glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
+
+        glEnable(GL_CULL_FACE);
+        glDepthFunc(GL_LESS);
     }
 }
 
@@ -258,6 +286,26 @@ void OpenGLRenderer::prepareBuffers() {
     );
     glEnableVertexAttribArray(2);
 
+    glVertexAttribPointer(
+        3,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, tangent))
+    );
+    glEnableVertexAttribArray(3);
+
+    glVertexAttribPointer(
+        4,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, bitangent))
+    );
+    glEnableVertexAttribArray(4);
+
     // light cube mesh
 
     glGenVertexArrays(1, &cubeMesh.vao);
@@ -279,27 +327,90 @@ void OpenGLRenderer::prepareBuffers() {
 }
 
 void OpenGLRenderer::loadTextures() {
-    stbi_set_flip_vertically_on_load(true); // needed as the y-axis (or rather the v coordinate) is flipped
+    stbi_set_flip_vertically_on_load(true);
 
-    int width, height, channelCount;
-    unsigned char *data = stbi_load("../assets/helmet/albedo.png", &width, &height, &channelCount, 0);
-    if (!data) {
-        throw std::runtime_error("failed to load texture!");
+    // color texture
+    {
+        int width, height, channelCount;
+        unsigned char *data = stbi_load("../assets/helmet/albedo.png", &width, &height, &channelCount, 0);
+        if (!data) {
+            throw std::runtime_error("failed to load texture!");
+        }
+
+        glGenTextures(1, &colorTextureID);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, colorTextureID);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
     }
 
-    glGenTextures(1, &colorTextureID);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, colorTextureID);
+    // normal texture
+    {
+        int width, height, channelCount;
+        unsigned char *data = stbi_load("../assets/helmet/normal.png", &width, &height, &channelCount, 0);
+        if (!data) {
+            throw std::runtime_error("failed to load texture!");
+        }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glGenTextures(1, &normalTextureID);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, normalTextureID);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    stbi_image_free(data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
+    }
+
+    // cubemap textures
+    {
+        const std::map<int, std::filesystem::path> cubemapTexturePaths {
+            { GL_TEXTURE_CUBE_MAP_POSITIVE_X, "../assets/skybox/right.jpg"  },
+            { GL_TEXTURE_CUBE_MAP_NEGATIVE_X, "../assets/skybox/left.jpg"   },
+            { GL_TEXTURE_CUBE_MAP_POSITIVE_Y, "../assets/skybox/top.jpg"    },
+            { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, "../assets/skybox/bottom.jpg" },
+            { GL_TEXTURE_CUBE_MAP_POSITIVE_Z, "../assets/skybox/front.jpg"  },
+            { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, "../assets/skybox/back.jpg"   },
+        };
+
+        glGenTextures(1, &cubemapTextureID);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTextureID);
+
+        stbi_set_flip_vertically_on_load(false);
+
+        for (const auto& [cubemapFaceID, path] : cubemapTexturePaths) {
+            int width, height, channelCount;
+            unsigned char *data = stbi_load(path.string().c_str(), &width, &height, &channelCount, 0);
+            if (!data) {
+                throw std::runtime_error("failed to load texture!");
+            }
+
+            glTexImage2D(cubemapFaceID, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    }
 }
 
 void OpenGLRenderer::loadMesh() {
@@ -375,6 +486,48 @@ void OpenGLRenderer::loadMesh() {
 
             indexOffset += numFaceVertices;
         }
+    }
+}
+
+void OpenGLRenderer::calculateTbnVectors() {
+    const size_t triangleCount = static_cast<size_t>(loadedMeshIndices.size() / 3);
+
+    for (size_t i = 0; i < triangleCount; i++) {
+        const uint32_t index1 = loadedMeshIndices[i * 3 + 0];
+        const uint32_t index2 = loadedMeshIndices[i * 3 + 1];
+        const uint32_t index3 = loadedMeshIndices[i * 3 + 2];
+
+        MeshVertex& vertex1 = loadedMeshVertices[index1];
+        MeshVertex& vertex2 = loadedMeshVertices[index2];
+        MeshVertex& vertex3 = loadedMeshVertices[index3];
+
+        const glm::vec3 delta_pos_1 = vertex2.position - vertex1.position;
+        const glm::vec3 delta_pos_2 = vertex3.position - vertex1.position;
+
+        const glm::vec2 delta_uv_1 = vertex2.tex_coords - vertex1.tex_coords;
+        const glm::vec2 delta_uv_2 = vertex3.tex_coords - vertex1.tex_coords;
+
+        const float scale = 1.0f / (delta_uv_1.x * delta_uv_2.y - delta_uv_2.x * delta_uv_1.y);
+
+        const glm::vec3 tangent = scale * glm::vec3 {
+            delta_uv_2.y * delta_pos_1.x - delta_uv_1.y * delta_pos_2.x,
+            delta_uv_2.y * delta_pos_1.y - delta_uv_1.y * delta_pos_2.y,
+            delta_uv_2.y * delta_pos_1.z - delta_uv_1.y * delta_pos_2.z
+        };
+
+        const glm::vec3 bitangent = scale * glm::vec3 {
+            delta_uv_2.x * delta_pos_1.x - delta_uv_1.x * delta_pos_2.x,
+            delta_uv_2.x * delta_pos_1.y - delta_uv_1.x * delta_pos_2.y,
+            delta_uv_2.x * delta_pos_1.z - delta_uv_1.x * delta_pos_2.z
+        };
+
+        vertex1.tangent = tangent;
+        vertex2.tangent = tangent;
+        vertex3.tangent = tangent;
+
+        vertex1.bitangent = bitangent;
+        vertex2.bitangent = bitangent;
+        vertex3.bitangent = bitangent;
     }
 }
 

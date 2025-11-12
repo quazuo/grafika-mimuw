@@ -25,7 +25,7 @@ class OpenGLRenderer {
     std::vector<MeshVertex> loadedMeshVertices;
     std::vector<GLuint> loadedMeshIndices;
     Mesh loadedMesh;
-    Mesh lightCubeMesh;
+    Mesh cubeMesh;
 
     GLuint colorTextureID;
 
