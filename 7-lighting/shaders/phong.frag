@@ -40,7 +40,7 @@ vec3 calc_directional_light() {
 
     vec3 ambient = ambient_factor * base_color;
     vec3 diffuse = diffuse_factor * directional_light.color * base_color;
-    vec3 specular = specular_factor * directional_light.color;
+    vec3 specular = (diffuse_factor > 0 ? 1.0f : 0.0f) * specular_factor * directional_light.color;
 
     return ambient + diffuse + specular;
 }
@@ -63,7 +63,7 @@ vec3 calc_point_light() {
 
     vec3 ambient = ambient_factor * base_color;
     vec3 diffuse = diffuse_factor * point_light.color * base_color;
-    vec3 specular = specular_factor * point_light.color;
+    vec3 specular = (diffuse_factor > 0 ? 1.0f : 0.0f) * specular_factor * point_light.color;
 
     return attenuation * (ambient + diffuse + specular);
 }

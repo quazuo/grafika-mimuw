@@ -172,6 +172,9 @@ void OpenGLRenderer::render() {
     };
     const glm::vec3 pointLightColor { 1.0f, 0.0f, 0.0f };
 
+    const glm::vec3 directionalLightColor = glm::vec3(1, 0.9, 0.8);
+    const glm::vec3 directionalLightDirection = glm::normalize(glm::vec3(-1.0f, -2.0f, -3.0f));
+
     {
         glBindVertexArray(cubeMesh.vao);
         lightCubeShaders->enable();
@@ -182,6 +185,12 @@ void OpenGLRenderer::render() {
         lightCubeShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
         lightCubeShaders->setUniform("color", pointLightColor);
+
+        glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
+
+        lightCubeShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), -directionalLightDirection * 10.0f)
+                                              * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
+        lightCubeShaders->setUniform("color", directionalLightColor);
 
         glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
     }
@@ -199,8 +208,8 @@ void OpenGLRenderer::render() {
 
         mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
 
-        mainShaders->setUniform("directional_light.direction", glm::normalize(glm::vec3(-1, -2, -3)));
-        mainShaders->setUniform("directional_light.color", glm::normalize(glm::vec3(1, 0.9, 0.8)));
+        mainShaders->setUniform("directional_light.direction", directionalLightDirection);
+        mainShaders->setUniform("directional_light.color", directionalLightColor);
 
         mainShaders->setUniform("point_light.position", lightCubePosition);
         mainShaders->setUniform("point_light.color", pointLightColor);
