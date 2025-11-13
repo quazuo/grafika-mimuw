@@ -8,7 +8,7 @@ out vec4 out_color;
 
 uniform sampler2D color_texture;
 uniform sampler2D normal_texture;
-uniform vec3 view_direction;
+uniform vec3 camera_position;
 
 struct DirectionalLight {
     vec3 direction;
@@ -35,12 +35,12 @@ vec3 calc_directional_light() {
     normal = TBN * normal; // tangent space -> world space
 
     vec3 light_direction = normalize(-directional_light.direction);
-    vec3 view_direction_norm = normalize(view_direction);
-    vec3 reflect_direction = normalize(reflect(-light_direction, normal));
+    vec3 view_direction = normalize(camera_position - position);
+    vec3 halfway_direction = normalize(light_direction + view_direction);
 
     float ambient_factor = 0.03f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
-    float specular_factor = pow(max(dot(view_direction_norm, reflect_direction), 0.0f), 32.0f);
+    float specular_factor = pow(max(dot(normal, halfway_direction), 0.0f), 32.0f);
 
     vec3 ambient = ambient_factor * base_color;
     vec3 diffuse = diffuse_factor * directional_light.color * base_color;
@@ -56,8 +56,8 @@ vec3 calc_point_light() {
     normal = TBN * normal; // tangent space -> world space
 
     vec3 light_direction = normalize(point_light.position - position);
-    vec3 view_direction_norm = normalize(view_direction);
-    vec3 reflect_direction = normalize(reflect(-light_direction, normal));
+    vec3 view_direction = normalize(camera_position - position);
+    vec3 halfway_direction = normalize(light_direction + view_direction);
 
     float distance = length(point_light.position - position);
     float attenuation = 1.0f / (point_light.att_constant
@@ -66,7 +66,7 @@ vec3 calc_point_light() {
 
     float ambient_factor = 0.03f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
-    float specular_factor = pow(max(dot(view_direction_norm, reflect_direction), 0.0f), 32.0f);
+    float specular_factor = pow(max(dot(normal, halfway_direction), 0.0f), 32.0f);
 
     vec3 ambient = ambient_factor * base_color;
     vec3 diffuse = diffuse_factor * point_light.color * base_color;

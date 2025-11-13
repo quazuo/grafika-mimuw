@@ -109,8 +109,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLShaders>(
-        "../9-cubemap/shaders/phong.vert",
-        "../9-cubemap/shaders/phong.frag"
+        "../9-cubemap/shaders/blinn-phong.vert",
+        "../9-cubemap/shaders/blinn-phong.frag"
     );
     lightCubeShaders = std::make_unique<GLShaders>(
         "../9-cubemap/shaders/basic-color.vert",
@@ -145,8 +145,8 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLShaders>(
-                "../9-cubemap/shaders/phong.vert",
-                "../9-cubemap/shaders/phong.frag"
+                "../9-cubemap/shaders/blinn-phong.vert",
+                "../9-cubemap/shaders/blinn-phong.frag"
             );
             lightCubeShaders = std::make_unique<GLShaders>(
                 "../9-cubemap/shaders/basic-color.vert",
@@ -204,7 +204,9 @@ void OpenGLRenderer::render() {
 
         mainShaders->setUniform("color_texture", 0);
         mainShaders->setUniform("normal_texture", 1);
-        mainShaders->setUniform("view_direction", glm::normalize(camera->getPosition()));
+        mainShaders->setUniform("reflectivity_texture", 2);
+        mainShaders->setUniform("skybox_texture", 3);
+        mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
 
         mainShaders->setUniform("directional_light.direction", glm::normalize(glm::vec3(-1, -2, -3)));
         mainShaders->setUniform("directional_light.color", glm::normalize(glm::vec3(1, 0.9, 0.8)));
@@ -228,7 +230,7 @@ void OpenGLRenderer::render() {
         skyboxShaders->setUniform("view", camera->getSkyboxViewMatrix());
         skyboxShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
-        skyboxShaders->setUniform("cubemap_texture", 2);
+        skyboxShaders->setUniform("skybox_texture", 3);
 
         glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
 
@@ -375,6 +377,29 @@ void OpenGLRenderer::loadTextures() {
         stbi_image_free(data);
     }
 
+    // reflectivity texture
+    {
+        int width, height, channelCount;
+        unsigned char *data = stbi_load("../assets/helmet/asd.png", &width, &height, &channelCount, 0);
+        if (!data) {
+            throw std::runtime_error("failed to load texture!");
+        }
+
+        glGenTextures(1, &reflectivityTextureID);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, reflectivityTextureID);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
+    }
+
     // cubemap textures
     {
         const std::map<int, std::filesystem::path> cubemapTexturePaths {
@@ -387,7 +412,7 @@ void OpenGLRenderer::loadTextures() {
         };
 
         glGenTextures(1, &cubemapTextureID);
-        glActiveTexture(GL_TEXTURE2);
+        glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTextureID);
 
         stbi_set_flip_vertically_on_load(false);

@@ -109,8 +109,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLShaders>(
-        "../8-normals/shaders/phong.vert",
-        "../8-normals/shaders/phong.frag"
+        "../8-normals/shaders/blinn-phong.vert",
+        "../8-normals/shaders/blinn-phong.frag"
     );
     lightCubeShaders = std::make_unique<GLShaders>(
         "../8-normals/shaders/basic-color.vert",
@@ -141,8 +141,8 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLShaders>(
-                "../8-normals/shaders/phong.vert",
-                "../8-normals/shaders/phong.frag"
+                "../8-normals/shaders/blinn-phong.vert",
+                "../8-normals/shaders/blinn-phong.frag"
             );
             lightCubeShaders = std::make_unique<GLShaders>(
                 "../8-normals/shaders/basic-color.vert",
@@ -196,7 +196,8 @@ void OpenGLRenderer::render() {
 
         mainShaders->setUniform("color_texture", 0);
         mainShaders->setUniform("normal_texture", 1);
-        mainShaders->setUniform("view_direction", glm::normalize(camera->getPosition()));
+
+        mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
 
         mainShaders->setUniform("directional_light.direction", glm::normalize(glm::vec3(-1, -2, -3)));
         mainShaders->setUniform("directional_light.color", glm::normalize(glm::vec3(1, 0.9, 0.8)));

@@ -31,6 +31,7 @@ class OpenGLRenderer {
 
     GLuint colorTextureID;
     GLuint normalTextureID;
+    GLuint reflectivityTextureID;
     GLuint cubemapTextureID;
 
     // camera stuff won't change too much; we're moving it to a separate class to avoid clutter

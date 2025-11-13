@@ -194,7 +194,8 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
         mainShaders->setUniform("color_texture", 0);
-        mainShaders->setUniform("view_direction", glm::normalize(camera->getPosition()));
+
+        mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
 
         mainShaders->setUniform("directional_light.direction", glm::normalize(glm::vec3(-1, -2, -3)));
         mainShaders->setUniform("directional_light.color", glm::normalize(glm::vec3(1, 0.9, 0.8)));
