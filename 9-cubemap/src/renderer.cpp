@@ -389,7 +389,7 @@ void OpenGLRenderer::loadTextures() {
     // reflectivity texture
     {
         int width, height, channelCount;
-        unsigned char *data = stbi_load("../assets/helmet/asd.png", &width, &height, &channelCount, 0);
+        unsigned char *data = stbi_load("../assets/helmet/reflectivity.png", &width, &height, &channelCount, 0);
         if (!data) {
             throw std::runtime_error("failed to load texture!");
         }
