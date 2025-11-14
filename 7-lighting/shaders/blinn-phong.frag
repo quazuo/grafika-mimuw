@@ -2,14 +2,11 @@
 
 in vec3 position;
 in vec2 tex_coords;
-in mat3 TBN;
+in vec3 normal;
 
 out vec4 out_color;
 
 uniform sampler2D color_texture;
-uniform sampler2D normal_texture;
-uniform sampler2D reflectivity_texture;
-uniform samplerCube skybox_texture;
 uniform vec3 camera_position;
 
 struct DirectionalLight {
@@ -32,9 +29,6 @@ uniform PointLight point_light;
 
 vec3 calc_directional_light() {
     vec3 base_color = texture(color_texture, tex_coords).rgb;
-    vec3 normal = texture(normal_texture, tex_coords).rgb;
-    normal = normal * 2.0 - 1.0; // [0,1] -> [-1,1]
-    normal = TBN * normal; // tangent space -> world space
 
     vec3 light_direction = normalize(-directional_light.direction);
     vec3 view_direction = normalize(camera_position - position);
@@ -53,9 +47,6 @@ vec3 calc_directional_light() {
 
 vec3 calc_point_light() {
     vec3 base_color = texture(color_texture, tex_coords).rgb;
-    vec3 normal = texture(normal_texture, tex_coords).rgb;
-    normal = normal * 2.0 - 1.0; // [0,1] -> [-1,1]
-    normal = TBN * normal; // tangent space -> world space
 
     vec3 light_direction = normalize(point_light.position - position);
     vec3 view_direction = normalize(camera_position - position);
@@ -77,23 +68,7 @@ vec3 calc_point_light() {
     return attenuation * (ambient + diffuse + specular);
 }
 
-vec3 calc_reflected_color() {
-    vec3 view_direction = normalize(camera_position - position);
-
-    vec3 normal = texture(normal_texture, tex_coords).rgb;
-    normal = normal * 2.0 - 1.0; // [0,1] -> [-1,1]
-    normal = TBN * normal; // tangent space -> world space
-
-    vec3 reflected_color = texture(skybox_texture, -reflect(view_direction, normal)).rgb;
-    return reflected_color;
-}
-
 void main() {
     vec3 color = calc_directional_light() + calc_point_light();
-    vec3 reflected_color = calc_reflected_color();
-
-    float reflectivity = texture(reflectivity_texture, tex_coords).r;
-    color = mix(color, reflected_color, reflectivity);
-
     out_color = vec4(color, 1.0f);
 }

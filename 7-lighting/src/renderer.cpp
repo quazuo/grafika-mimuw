@@ -109,8 +109,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLShaders>(
-        "../7-lighting/shaders/phong.vert",
-        "../7-lighting/shaders/phong.frag"
+        "../7-lighting/shaders/blinn-phong.vert",
+        "../7-lighting/shaders/blinn-phong.frag"
     );
     lightCubeShaders = std::make_unique<GLShaders>(
         "../7-lighting/shaders/basic-color.vert",
