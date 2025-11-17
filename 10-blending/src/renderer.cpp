@@ -260,7 +260,7 @@ void OpenGLRenderer::render() {
     }
 
     {
-        glDisable(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE); // disable face culling for now as we want to view the quads from both directions
 
         glBindVertexArray(cubeMesh.vao);
         basicColorShaders->enable();
@@ -269,7 +269,7 @@ void OpenGLRenderer::render() {
 
         basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(1, 0, 5)));
         basicColorShaders->setUniform("color", glm::vec4(1.0f, 0.0f, 0.0f, 0.3f));
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, 6); // just render one face of the cube as a quick hack to get a quad :)
 
         basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(0, 1, 6)));
         basicColorShaders->setUniform("color", glm::vec4(0.0f, 1.0f, 0.0f, 0.7f));
