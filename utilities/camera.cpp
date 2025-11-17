@@ -1,7 +1,7 @@
 #include "camera.hpp"
 
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
+#include <../dependencies/glm/glm/ext/matrix_clip_space.hpp>
+#include <../dependencies/glm/glm/ext/matrix_transform.hpp>
 
 glm::mat4 Camera::getViewMatrix() const {
     const glm::vec3 front = {

@@ -1,10 +1,10 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include <../dependencies/glew/include/GL/glew.h>
+#include <../dependencies/glfw/include/GLFW/glfw3.h>
 
-#include <glm/glm.hpp>
+#include <../dependencies/glm/glm/glm.hpp>
 
 class Camera {
     GLFWwindow* window;

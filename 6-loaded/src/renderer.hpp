@@ -7,7 +7,7 @@
 #include "GLFW/glfw3.h"
 
 #include "utilities/gl-shader.hpp"
-#include "camera.hpp"
+#include "utilities/camera.hpp"
 #include "vertex.hpp"
 
 class OpenGLRenderer {
