@@ -62,6 +62,15 @@ const std::vector<BasicVertex> cubeVertices{
     {{-1.0f,  1.0f, -1.0f}},
 };
 
+const std::vector<BasicTexturedVertex> tvQuadVertices{
+    {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+    {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
+    {{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f}},
+    {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
+    {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+};
+
 OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -73,7 +82,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = {windowWidth, windowHeight};
-    window     = glfwCreateWindow(windowWidth, windowHeight, "10-blending", nullptr, nullptr);
+    window     = glfwCreateWindow(windowWidth, windowHeight, "11-framebuffer", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -112,16 +121,20 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLShaders>(
-        "../10-blending/shaders/blinn-phong.vert",
-        "../10-blending/shaders/blinn-phong.frag"
+        "../11-framebuffer/shaders/blinn-phong.vert",
+        "../11-framebuffer/shaders/blinn-phong.frag"
     );
     basicColorShaders = std::make_unique<GLShaders>(
-        "../10-blending/shaders/basic-color.vert",
-        "../10-blending/shaders/basic-color.frag"
+        "../11-framebuffer/shaders/basic-color.vert",
+        "../11-framebuffer/shaders/basic-color.frag"
+    );
+    basicTexturedShaders = std::make_unique<GLShaders>(
+        "../11-framebuffer/shaders/basic-textured.vert",
+        "../11-framebuffer/shaders/basic-textured.frag"
     );
     skyboxShaders = std::make_unique<GLShaders>(
-        "../10-blending/shaders/skybox.vert",
-        "../10-blending/shaders/skybox.frag"
+        "../11-framebuffer/shaders/skybox.vert",
+        "../11-framebuffer/shaders/skybox.frag"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -131,6 +144,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     prepareBuffers();
 
     loadTextures();
+
+    initTvFramebuffer();
 }
 
 OpenGLRenderer::~OpenGLRenderer() {
@@ -148,16 +163,20 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLShaders>(
-                "../10-blending/shaders/blinn-phong.vert",
-                "../10-blending/shaders/blinn-phong.frag"
+                "../11-framebuffer/shaders/blinn-phong.vert",
+                "../11-framebuffer/shaders/blinn-phong.frag"
             );
             basicColorShaders = std::make_unique<GLShaders>(
-                "../10-blending/shaders/basic-color.vert",
-                "../10-blending/shaders/basic-color.frag"
+                "../11-framebuffer/shaders/basic-color.vert",
+                "../11-framebuffer/shaders/basic-color.frag"
+            );
+            basicTexturedShaders = std::make_unique<GLShaders>(
+                "../11-framebuffer/shaders/basic-textured.vert",
+                "../11-framebuffer/shaders/basic-textured.frag"
             );
             skyboxShaders = std::make_unique<GLShaders>(
-                "../10-blending/shaders/skybox.vert",
-                "../10-blending/shaders/skybox.frag"
+                "../11-framebuffer/shaders/skybox.vert",
+                "../11-framebuffer/shaders/skybox.frag"
             );
         }
         wasPressedLastFrame = true;
@@ -171,6 +190,40 @@ void OpenGLRenderer::startRendering() {
 }
 
 void OpenGLRenderer::render() {
+    glBindFramebuffer(GL_FRAMEBUFFER, tvFramebuffer);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, tvFramebufferWidth, tvFramebufferHeight);
+    renderTvView();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, windowSize.x, windowSize.y);
+    renderScene();
+
+    {
+        glDisable(GL_CULL_FACE); // disable face culling for a moment as we want to view the quad from both directions
+
+        glBindVertexArray(texturedQuadMesh.vao);
+        basicTexturedShaders->enable();
+
+        basicTexturedShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(-5, 0, 5)));
+        basicTexturedShaders->setUniform("view", camera->getViewMatrix());
+        basicTexturedShaders->setUniform("projection", camera->getPerspectiveMatrix());
+
+        basicTexturedShaders->setUniform("sampled_texture", 4);
+
+        glDrawArrays(GL_TRIANGLES, 0, tvQuadVertices.size());
+
+        glEnable(GL_CULL_FACE);
+    }
+}
+
+void OpenGLRenderer::finishRendering() const {
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+}
+
+void OpenGLRenderer::renderScene() {
     const float time = static_cast<float>(glfwGetTime());
 
     constexpr float lightCubeScale = 0.05f;
@@ -286,93 +339,180 @@ void OpenGLRenderer::render() {
     }
 }
 
-void OpenGLRenderer::finishRendering() const {
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+void OpenGLRenderer::renderTvView() {
+    const float time = static_cast<float>(glfwGetTime());
+
+    constexpr float lightOrbitRadius = 3.0f;
+    constexpr float timeScale = 1.0f;
+    const auto lightCubePosition = lightOrbitRadius * glm::vec3 {
+        glm::sin(time * timeScale),
+        0.0f,
+        glm::cos(time * timeScale)
+    };
+    constexpr glm::vec4 pointLightColor { 1.0f, 0.0f, 0.0f, 1.0f };
+
+    constexpr glm::vec4 directionalLightColor { 1, 0.9, 0.8, 1.0f };
+    const glm::vec3 directionalLightDirection = glm::normalize(glm::vec3(-1.0f, -2.0f, -3.0f));
+
+    const glm::mat4 lightViewMatrix = glm::lookAt(lightCubePosition, glm::vec3(0), glm::vec3(0, 1, 0));
+    const glm::mat4 lightSkyboxViewMatrix = glm::lookAt(glm::vec3(0), -lightCubePosition, glm::vec3(0, 1, 0));
+
+    {
+        glBindVertexArray(loadedMesh.vao);
+        mainShaders->enable();
+
+        mainShaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(2.0f)));
+        mainShaders->setUniform("view", lightViewMatrix);
+        mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
+
+        mainShaders->setUniform("color_texture", 0);
+        mainShaders->setUniform("normal_texture", 1);
+        mainShaders->setUniform("reflectivity_texture", 2);
+        mainShaders->setUniform("skybox_texture", 3);
+        mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
+
+        mainShaders->setUniform("directional_light.direction", directionalLightDirection);
+        mainShaders->setUniform("directional_light.color", glm::vec3(directionalLightColor));
+
+        mainShaders->setUniform("point_light.position", lightCubePosition);
+        mainShaders->setUniform("point_light.color", glm::vec3(pointLightColor));
+        mainShaders->setUniform("point_light.att_constant", 1.0f);
+        mainShaders->setUniform("point_light.att_linear", 0.22f);
+        mainShaders->setUniform("point_light.att_quadratic", 0.2f);
+
+        glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
+    }
+
+    {
+        glDisable(GL_CULL_FACE);
+        glDepthFunc(GL_LEQUAL);
+
+        glBindVertexArray(cubeMesh.vao);
+        skyboxShaders->enable();
+
+        skyboxShaders->setUniform("view", lightSkyboxViewMatrix);
+        skyboxShaders->setUniform("projection", camera->getPerspectiveMatrix());
+
+        skyboxShaders->setUniform("skybox_texture", 3);
+
+        glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
+
+        glEnable(GL_CULL_FACE);
+        glDepthFunc(GL_LESS);
+    }
 }
 
 void OpenGLRenderer::prepareBuffers() {
-    // loaded mesh
+    { // loaded mesh
+        glGenVertexArrays(1, &loadedMesh.vao);
+        glBindVertexArray(loadedMesh.vao);
 
-    glGenVertexArrays(1, &loadedMesh.vao);
-    glBindVertexArray(loadedMesh.vao);
+        glGenBuffers(1, &loadedMesh.vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, loadedMesh.vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(MeshVertex) * loadedMeshVertices.size(), loadedMeshVertices.data(), GL_STATIC_DRAW);
 
-    glGenBuffers(1, &loadedMesh.vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, loadedMesh.vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(MeshVertex) * loadedMeshVertices.size(), loadedMeshVertices.data(), GL_STATIC_DRAW);
+        glGenBuffers(1, &loadedMesh.ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, loadedMesh.ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * loadedMeshIndices.size(), loadedMeshIndices.data(), GL_STATIC_DRAW);
 
-    glGenBuffers(1, &loadedMesh.ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, loadedMesh.ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * loadedMeshIndices.size(), loadedMeshIndices.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(
+            0,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(MeshVertex),
+            reinterpret_cast<void *>(offsetof(MeshVertex, position))
+        );
+        glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(MeshVertex),
-        reinterpret_cast<void *>(offsetof(MeshVertex, position))
-    );
-    glEnableVertexAttribArray(0);
+        glVertexAttribPointer(
+            1,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(MeshVertex),
+            reinterpret_cast<void *>(offsetof(MeshVertex, tex_coords))
+        );
+        glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(
-        1,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(MeshVertex),
-        reinterpret_cast<void *>(offsetof(MeshVertex, tex_coords))
-    );
-    glEnableVertexAttribArray(1);
+        glVertexAttribPointer(
+            2,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(MeshVertex),
+            reinterpret_cast<void *>(offsetof(MeshVertex, normal))
+        );
+        glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(
-        2,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(MeshVertex),
-        reinterpret_cast<void *>(offsetof(MeshVertex, normal))
-    );
-    glEnableVertexAttribArray(2);
+        glVertexAttribPointer(
+            3,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(MeshVertex),
+            reinterpret_cast<void *>(offsetof(MeshVertex, tangent))
+        );
+        glEnableVertexAttribArray(3);
 
-    glVertexAttribPointer(
-        3,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(MeshVertex),
-        reinterpret_cast<void *>(offsetof(MeshVertex, tangent))
-    );
-    glEnableVertexAttribArray(3);
+        glVertexAttribPointer(
+            4,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(MeshVertex),
+            reinterpret_cast<void *>(offsetof(MeshVertex, bitangent))
+        );
+        glEnableVertexAttribArray(4);
+    }
 
-    glVertexAttribPointer(
-        4,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(MeshVertex),
-        reinterpret_cast<void *>(offsetof(MeshVertex, bitangent))
-    );
-    glEnableVertexAttribArray(4);
+    { // light cube mesh
+        glGenVertexArrays(1, &cubeMesh.vao);
+        glBindVertexArray(cubeMesh.vao);
 
-    // light cube mesh
+        glGenBuffers(1, &cubeMesh.vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, cubeMesh.vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(BasicVertex) * cubeVertices.size(), cubeVertices.data(), GL_STATIC_DRAW);
 
-    glGenVertexArrays(1, &cubeMesh.vao);
-    glBindVertexArray(cubeMesh.vao);
+        glVertexAttribPointer(
+            0,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(BasicVertex),
+            reinterpret_cast<void *>(offsetof(BasicVertex, position))
+        );
+        glEnableVertexAttribArray(0);
+    }
 
-    glGenBuffers(1, &cubeMesh.vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, cubeMesh.vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(BasicVertex) * cubeVertices.size(), cubeVertices.data(), GL_STATIC_DRAW);
+    { // textured quad mesh
+        glGenVertexArrays(1, &texturedQuadMesh.vao);
+        glBindVertexArray(texturedQuadMesh.vao);
 
-    glVertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(BasicVertex),
-        reinterpret_cast<void *>(offsetof(BasicVertex, position))
-    );
-    glEnableVertexAttribArray(0);
+        glGenBuffers(1, &texturedQuadMesh.vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, texturedQuadMesh.vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(BasicTexturedVertex) * tvQuadVertices.size(), tvQuadVertices.data(), GL_STATIC_DRAW);
+
+        glVertexAttribPointer(
+            0,
+            3,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(BasicTexturedVertex),
+            reinterpret_cast<void *>(offsetof(BasicTexturedVertex, position))
+        );
+        glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(
+            1,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(BasicTexturedVertex),
+            reinterpret_cast<void *>(offsetof(BasicTexturedVertex, tex_coords))
+        );
+        glEnableVertexAttribArray(1);
+    }
 }
 
 void OpenGLRenderer::loadTextures() {
@@ -603,6 +743,47 @@ void OpenGLRenderer::calculateTbnVectors() {
     }
 }
 
+void OpenGLRenderer::initTvFramebuffer() {
+    glGenFramebuffers(1, &tvFramebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, tvFramebuffer);
+
+    // create the color attachment for this framebuffer, then attach it
+    // at least one color attachment is *required*!
+    glGenTextures(1, &framebufferColorTextureID);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, framebufferColorTextureID);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tvFramebufferWidth, tvFramebufferHeight,
+                 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr); // no pixel data! it stays uninitialized
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebufferColorTextureID, 0);
+
+    // create the depth attachment for this framebuffer, then attach it
+    // a depth attachment isn't strictly required, but we will need one in this usecase
+    glGenTextures(1, &framebufferDepthTextureID);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, framebufferDepthTextureID);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, tvFramebufferWidth, tvFramebufferHeight,
+                 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, framebufferDepthTextureID, 0);
+
+    // just to be sure, check if the framebuffer was created properly
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        throw std::runtime_error("framebuffer creation failed! status: " + std::to_string(glCheckFramebufferStatus(GL_FRAMEBUFFER)));
+    }
+
+    // go back to the default framebuffer (the one which represents the window)
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void OpenGLRenderer::windowRefreshCallback(GLFWwindow *window) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     OpenGLRenderer *renderer = static_cast<OpenGLRenderer *>(glfwGetWindowUserPointer(window));
@@ -615,5 +796,8 @@ void OpenGLRenderer::windowRefreshCallback(GLFWwindow *window) {
 void OpenGLRenderer::framebufferSizeCallback(GLFWwindow *window, const int width, const int height) {
     if (width > 0 && height > 0) {
         glViewport(0, 0, width, height);
+
+        OpenGLRenderer *renderer = static_cast<OpenGLRenderer *>(glfwGetWindowUserPointer(window));
+        renderer->windowSize = { width, height };
     }
 }
