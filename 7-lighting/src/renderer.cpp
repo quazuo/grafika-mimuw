@@ -112,7 +112,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         "../7-lighting/shaders/blinn-phong.vert",
         "../7-lighting/shaders/blinn-phong.frag"
     );
-    lightCubeShaders = std::make_unique<GLShaders>(
+    basicColorShaders = std::make_unique<GLShaders>(
         "../7-lighting/shaders/basic-color.vert",
         "../7-lighting/shaders/basic-color.frag"
     );
@@ -143,7 +143,7 @@ void OpenGLRenderer::tickInputEvents() {
                 "../7-lighting/shaders/phong.vert",
                 "../7-lighting/shaders/phong.frag"
             );
-            lightCubeShaders = std::make_unique<GLShaders>(
+            basicColorShaders = std::make_unique<GLShaders>(
                 "../7-lighting/shaders/basic-color.vert",
                 "../7-lighting/shaders/basic-color.frag"
             );
@@ -176,20 +176,20 @@ void OpenGLRenderer::render() {
 
     {
         glBindVertexArray(cubeMesh.vao);
-        lightCubeShaders->enable();
+        basicColorShaders->enable();
 
-        lightCubeShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePosition)
+        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePosition)
                                               * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
-        lightCubeShaders->setUniform("view", camera->getViewMatrix());
-        lightCubeShaders->setUniform("projection", camera->getPerspectiveMatrix());
+        basicColorShaders->setUniform("view", camera->getViewMatrix());
+        basicColorShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
-        lightCubeShaders->setUniform("color", pointLightColor);
+        basicColorShaders->setUniform("color", pointLightColor);
 
         glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
 
-        lightCubeShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), -directionalLightDirection * 10.0f)
+        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), -directionalLightDirection * 10.0f)
                                               * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
-        lightCubeShaders->setUniform("color", directionalLightColor);
+        basicColorShaders->setUniform("color", directionalLightColor);
 
         glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
     }

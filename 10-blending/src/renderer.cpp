@@ -62,6 +62,15 @@ const std::vector<BasicVertex> cubeVertices{
     {{-1.0f,  1.0f, -1.0f}},
 };
 
+const std::vector<BasicVertex> transparentQuadVertices{
+    {{ 1.0f, -1.0f, -1.0f}},
+    {{-1.0f, -1.0f, -1.0f}},
+    {{ 1.0f,  1.0f, -1.0f}},
+    {{-1.0f,  1.0f, -1.0f}},
+    {{ 1.0f,  1.0f, -1.0f}},
+    {{-1.0f, -1.0f, -1.0f}},
+};
+
 OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -73,7 +82,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = {windowWidth, windowHeight};
-    window     = glfwCreateWindow(windowWidth, windowHeight, "9-cubemap", nullptr, nullptr);
+    window     = glfwCreateWindow(windowWidth, windowHeight, "10-blending", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -99,6 +108,9 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // final_color = alpha * new_color + (1 - alpha) * old_color
+
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
@@ -109,16 +121,16 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLShaders>(
-        "../9-cubemap/shaders/blinn-phong.vert",
-        "../9-cubemap/shaders/blinn-phong.frag"
+        "../10-blending/shaders/blinn-phong.vert",
+        "../10-blending/shaders/blinn-phong.frag"
     );
     basicColorShaders = std::make_unique<GLShaders>(
-        "../9-cubemap/shaders/basic-color.vert",
-        "../9-cubemap/shaders/basic-color.frag"
+        "../10-blending/shaders/basic-color.vert",
+        "../10-blending/shaders/basic-color.frag"
     );
     skyboxShaders = std::make_unique<GLShaders>(
-        "../9-cubemap/shaders/skybox.vert",
-        "../9-cubemap/shaders/skybox.frag"
+        "../10-blending/shaders/skybox.vert",
+        "../10-blending/shaders/skybox.frag"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -145,16 +157,16 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLShaders>(
-                "../9-cubemap/shaders/blinn-phong.vert",
-                "../9-cubemap/shaders/blinn-phong.frag"
+                "../10-blending/shaders/blinn-phong.vert",
+                "../10-blending/shaders/blinn-phong.frag"
             );
             basicColorShaders = std::make_unique<GLShaders>(
-                "../9-cubemap/shaders/basic-color.vert",
-                "../9-cubemap/shaders/basic-color.frag"
+                "../10-blending/shaders/basic-color.vert",
+                "../10-blending/shaders/basic-color.frag"
             );
             skyboxShaders = std::make_unique<GLShaders>(
-                "../9-cubemap/shaders/skybox.vert",
-                "../9-cubemap/shaders/skybox.frag"
+                "../10-blending/shaders/skybox.vert",
+                "../10-blending/shaders/skybox.frag"
             );
         }
         wasPressedLastFrame = true;
@@ -168,7 +180,7 @@ void OpenGLRenderer::startRendering() {
 }
 
 void OpenGLRenderer::render() {
-    const float time = glfwGetTime();
+    const float time = static_cast<float>(glfwGetTime());
 
     constexpr float lightCubeScale = 0.05f;
     constexpr float lightOrbitRadius = 3.0f;
@@ -178,9 +190,9 @@ void OpenGLRenderer::render() {
         0.0f,
         glm::cos(time * timeScale)
     };
-    const glm::vec3 pointLightColor { 1.0f, 0.0f, 0.0f };
+    constexpr glm::vec4 pointLightColor { 1.0f, 0.0f, 0.0f, 1.0f };
 
-    const glm::vec3 directionalLightColor = glm::vec3(1, 0.9, 0.8);
+    constexpr glm::vec4 directionalLightColor { 1, 0.9, 0.8, 1.0f };
     const glm::vec3 directionalLightDirection = glm::normalize(glm::vec3(-1.0f, -2.0f, -3.0f));
 
     {
@@ -218,10 +230,10 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
 
         mainShaders->setUniform("directional_light.direction", directionalLightDirection);
-        mainShaders->setUniform("directional_light.color", directionalLightColor);
+        mainShaders->setUniform("directional_light.color", glm::vec3(directionalLightColor));
 
         mainShaders->setUniform("point_light.position", lightCubePosition);
-        mainShaders->setUniform("point_light.color", pointLightColor);
+        mainShaders->setUniform("point_light.color", glm::vec3(pointLightColor));
         mainShaders->setUniform("point_light.att_constant", 1.0f);
         mainShaders->setUniform("point_light.att_linear", 0.22f);
         mainShaders->setUniform("point_light.att_quadratic", 0.2f);
@@ -245,6 +257,41 @@ void OpenGLRenderer::render() {
 
         glEnable(GL_CULL_FACE);
         glDepthFunc(GL_LESS);
+    }
+
+    {
+        glDisable(GL_CULL_FACE);
+
+        glBindVertexArray(cubeMesh.vao);
+        basicColorShaders->enable();
+
+        // these 3 are easily sortable
+
+        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(1, 0, 5)));
+        basicColorShaders->setUniform("color", glm::vec4(1.0f, 0.0f, 0.0f, 0.3f));
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(0, 1, 6)));
+        basicColorShaders->setUniform("color", glm::vec4(0.0f, 1.0f, 0.0f, 0.7f));
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(-1, -1, 7)));
+        basicColorShaders->setUniform("color", glm::vec4(0.0f, 0.0f, 1.0f, 0.1f));
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        // edge case -- these are not sortable
+        // a more refined solution is needed here!
+
+        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(-1.0, 0, 15)));
+        basicColorShaders->setUniform("color", glm::vec4(1.0f, 1.0f, 0.0f, 0.3f));
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(0, 0, 14))
+                                               * glm::rotate(glm::identity<glm::mat4>(), 3.14f / 2, glm::vec3(0, 1, 0)));
+        basicColorShaders->setUniform("color", glm::vec4(0.0f, 1.0f, 1.0f, 0.3f));
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glEnable(GL_CULL_FACE);
     }
 }
 

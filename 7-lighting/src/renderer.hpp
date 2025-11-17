@@ -20,7 +20,7 @@ class OpenGLRenderer {
     glm::ivec2 windowSize;
     GLFWwindow *window;
 
-    std::unique_ptr<GLShaders> mainShaders, lightCubeShaders;
+    std::unique_ptr<GLShaders> mainShaders, basicColorShaders;
 
     std::vector<MeshVertex> loadedMeshVertices;
     std::vector<GLuint> loadedMeshIndices;
