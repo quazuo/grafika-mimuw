@@ -271,7 +271,7 @@ void OpenGLRenderer::renderScene() {
         mainShaders->setUniform("normal_texture", 1);
         mainShaders->setUniform("reflectivity_texture", 2);
         mainShaders->setUniform("skybox_texture", 3);
-        mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
+        mainShaders->setUniform("camera_position", camera->getPosition());
 
         mainShaders->setUniform("directional_light.direction", directionalLightDirection);
         mainShaders->setUniform("directional_light.color", glm::vec3(directionalLightColor));
@@ -369,7 +369,7 @@ void OpenGLRenderer::renderTvView() {
         mainShaders->setUniform("normal_texture", 1);
         mainShaders->setUniform("reflectivity_texture", 2);
         mainShaders->setUniform("skybox_texture", 3);
-        mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
+        mainShaders->setUniform("camera_position", lightCubePosition);
 
         mainShaders->setUniform("directional_light.direction", directionalLightDirection);
         mainShaders->setUniform("directional_light.color", glm::vec3(directionalLightColor));

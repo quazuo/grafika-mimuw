@@ -36,7 +36,7 @@ vec3 calc_directional_light() {
 
     float ambient_factor = 0.03f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
-    float specular_factor = pow(max(dot(normal, halfway_direction), 0.0f), 32.0f);
+    float specular_factor = pow(max(dot(normal, halfway_direction), 0.0f), 64.0f);
 
     vec3 ambient = ambient_factor * base_color;
     vec3 diffuse = diffuse_factor * directional_light.color * base_color;
@@ -59,7 +59,7 @@ vec3 calc_point_light() {
 
     float ambient_factor = 0.03f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
-    float specular_factor = pow(max(dot(normal, halfway_direction), 0.0f), 32.0f);
+    float specular_factor = pow(max(dot(normal, halfway_direction), 0.0f), 64.0f);
 
     vec3 ambient = ambient_factor * base_color;
     vec3 diffuse = diffuse_factor * point_light.color * base_color;

@@ -17,7 +17,7 @@ uniform vec3 light_direction;
 
 void main() {
     gl_Position = projection * view * model * vec4(in_position, 1.0);
-    position = in_position;
+    position = vec3(model * vec4(in_position, 1.0));
     tex_coords = in_tex_coords;
 
     mat3 normal_matrix = mat3(transpose(inverse(model)));

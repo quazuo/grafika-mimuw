@@ -206,7 +206,7 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("color_texture", 0);
         mainShaders->setUniform("normal_texture", 1);
 
-        mainShaders->setUniform("camera_position", glm::normalize(camera->getPosition()));
+        mainShaders->setUniform("camera_position", camera->getPosition());
 
         mainShaders->setUniform("directional_light.direction", directionalLightDirection);
         mainShaders->setUniform("directional_light.color", directionalLightColor);
