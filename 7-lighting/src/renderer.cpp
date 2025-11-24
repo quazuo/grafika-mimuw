@@ -179,7 +179,7 @@ void OpenGLRenderer::render() {
         basicColorShaders->enable();
 
         basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePosition)
-                                              * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
+                                               * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
         basicColorShaders->setUniform("view", camera->getViewMatrix());
         basicColorShaders->setUniform("projection", camera->getPerspectiveMatrix());
 

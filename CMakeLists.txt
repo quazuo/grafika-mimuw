@@ -19,6 +19,8 @@ include_directories(
         dependencies/glew/include/
         dependencies/glfw/include/
         dependencies/glm/
+        dependencies/imgui/
+        dependencies/imgui/backends/
         dependencies/tinyobjloader/
         dependencies/stb/
         utilities/
@@ -54,3 +56,4 @@ add_subdirectory(9-cubemap)
 add_subdirectory(10-blending)
 add_subdirectory(11-framebuffer)
 add_subdirectory(12-stencil)
+add_subdirectory(13-imgui)
