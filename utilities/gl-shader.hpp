@@ -18,6 +18,12 @@ class GLShaders {
 public:
     GLShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath);
 
+    ~GLShaders();
+
+    GLShaders(const GLShaders& other) = delete;
+
+    GLShaders& operator=(const GLShaders& other) = delete;
+
     GLuint getID() const { return programID; }
 
     void enable() const;

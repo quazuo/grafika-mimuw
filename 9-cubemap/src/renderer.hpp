@@ -21,7 +21,7 @@ class OpenGLRenderer {
     GLFWwindow *window;
 
     std::unique_ptr<GLShaders> mainShaders;
-    std::unique_ptr<GLShaders>basicColorShaders;
+    std::unique_ptr<GLShaders> basicColorShaders;
     std::unique_ptr<GLShaders> skyboxShaders;
 
     std::vector<MeshVertex> loadedMeshVertices;

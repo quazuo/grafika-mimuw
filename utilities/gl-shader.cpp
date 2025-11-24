@@ -12,6 +12,10 @@ GLShaders::GLShaders(const std::filesystem::path &vertexShaderPath, const std::f
     glDeleteShader(fragmentShaderID);
 }
 
+GLShaders::~GLShaders() {
+    glDeleteProgram(programID);
+}
+
 void GLShaders::enable() const {
     glUseProgram(programID);
 }

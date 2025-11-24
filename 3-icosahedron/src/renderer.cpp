@@ -106,6 +106,7 @@ OpenGLRenderer::~OpenGLRenderer() {
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &ebo);
+
     glfwDestroyWindow(window);
     glfwTerminate();
 }

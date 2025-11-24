@@ -171,8 +171,27 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 }
 
 OpenGLRenderer::~OpenGLRenderer() {
-    glDeleteBuffers(1, &loadedMesh.vbo);
-    glDeleteVertexArrays(1, &loadedMesh.vao);
+    const std::vector usedBuffers {
+        loadedMesh.vbo, loadedMesh.ebo,
+        cubeMesh.vbo, cubeMesh.ebo,
+    };
+
+    const std::vector usedVertexArrays {
+        loadedMesh.vao,
+        cubeMesh.vao,
+    };
+
+    const std::vector usedTextures {
+        colorTextureID,
+        normalTextureID,
+        reflectivityTextureID,
+        cubemapTextureID,
+    };
+
+    glDeleteBuffers(static_cast<GLsizei>(usedBuffers.size()), usedBuffers.data());
+    glDeleteVertexArrays(static_cast<GLsizei>(usedVertexArrays.size()), usedVertexArrays.data());
+    glDeleteTextures(static_cast<GLsizei>(usedTextures.size()), usedTextures.data());
+
     glfwDestroyWindow(window);
     glfwTerminate();
 }

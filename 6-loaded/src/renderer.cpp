@@ -81,6 +81,10 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 OpenGLRenderer::~OpenGLRenderer() {
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &ebo);
+
+    glDeleteTextures(1, &colorTextureID);
+
     glfwDestroyWindow(window);
     glfwTerminate();
 }
