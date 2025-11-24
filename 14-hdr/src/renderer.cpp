@@ -82,7 +82,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = {windowWidth, windowHeight};
-    window     = glfwCreateWindow(windowWidth, windowHeight, "12-stencil", nullptr, nullptr);
+    window     = glfwCreateWindow(windowWidth, windowHeight, "14-hdr", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -111,26 +111,6 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glEnable(GL_STENCIL_TEST);
-
-    // this is already set by default, hence doing this just for presentation purposes
-    glStencilMask(0xFF);
-
-    // in summary: fragment passes iff: `(current_stencil_value & 0xFF) == (1 & 0xFF)`.
-    // the `& 0xFF` are redundant (as we're working with one-byte values anyway), so it can be reduced to just `current_stencil_value == 1`.
-    glStencilFunc(
-        GL_EQUAL,   // fragment passes the stencil test iff the corresponding value in the stencil buffer EQUALS the next argument
-        1,          // the value which is compared with values in the stencil buffer
-        0xFF        // mask applied (AND) to both compared values
-    );
-
-    // this is already set by default, hence doing this just for presentation purposes
-    glStencilOp(
-        GL_KEEP,    // what to do if the stencil test fails? (keep the previous value; don't change it)
-        GL_KEEP,    // what to do if the stencil test passes, but the depth test fails?
-        GL_KEEP     // what to do if both tests pass?
-    );
-
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
@@ -140,25 +120,32 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glfwSetWindowUserPointer(window, this);
 
+    // ImGui
+    {
+        ImGui::CreateContext();
+
+        ImGuiIO& io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+        ImGui_ImplGlfw_InitForOpenGL(window, true);
+        ImGui_ImplOpenGL3_Init();
+    }
+
     mainShaders = std::make_unique<GLShaders>(
-        "../12-stencil/shaders/blinn-phong.vert",
-        "../12-stencil/shaders/blinn-phong.frag"
+        "../14-hdr/shaders/blinn-phong.vert",
+        "../14-hdr/shaders/blinn-phong.frag"
     );
     basicColorShaders = std::make_unique<GLShaders>(
-        "../12-stencil/shaders/basic-color.vert",
-        "../12-stencil/shaders/basic-color.frag"
+        "../14-hdr/shaders/basic-color.vert",
+        "../14-hdr/shaders/basic-color.frag"
     );
     basicTexturedShaders = std::make_unique<GLShaders>(
-        "../12-stencil/shaders/basic-textured.vert",
-        "../12-stencil/shaders/basic-textured.frag"
+        "../14-hdr/shaders/basic-textured.vert",
+        "../14-hdr/shaders/basic-textured.frag"
     );
     skyboxShaders = std::make_unique<GLShaders>(
-        "../12-stencil/shaders/skybox.vert",
-        "../12-stencil/shaders/skybox.frag"
-    );
-    outlineShaders = std::make_unique<GLShaders>(
-        "../12-stencil/shaders/outline.vert",
-        "../12-stencil/shaders/outline.frag"
+        "../14-hdr/shaders/skybox.vert",
+        "../14-hdr/shaders/skybox.frag"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -171,6 +158,10 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 }
 
 OpenGLRenderer::~OpenGLRenderer() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     const std::vector usedBuffers {
         loadedMesh.vbo, loadedMesh.ebo,
         cubeMesh.vbo, cubeMesh.ebo,
@@ -204,24 +195,20 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLShaders>(
-                "../12-stencil/shaders/blinn-phong.vert",
-                "../12-stencil/shaders/blinn-phong.frag"
+                "../14-hdr/shaders/blinn-phong.vert",
+                "../14-hdr/shaders/blinn-phong.frag"
             );
             basicColorShaders = std::make_unique<GLShaders>(
-                "../12-stencil/shaders/basic-color.vert",
-                "../12-stencil/shaders/basic-color.frag"
+                "../14-hdr/shaders/basic-color.vert",
+                "../14-hdr/shaders/basic-color.frag"
             );
             basicTexturedShaders = std::make_unique<GLShaders>(
-                "../12-stencil/shaders/basic-textured.vert",
-                "../12-stencil/shaders/basic-textured.frag"
+                "../14-hdr/shaders/basic-textured.vert",
+                "../14-hdr/shaders/basic-textured.frag"
             );
             skyboxShaders = std::make_unique<GLShaders>(
-                "../12-stencil/shaders/skybox.vert",
-                "../12-stencil/shaders/skybox.frag"
-            );
-            outlineShaders = std::make_unique<GLShaders>(
-                "../12-stencil/shaders/outline.vert",
-                "../12-stencil/shaders/outline.frag"
+                "../14-hdr/shaders/skybox.vert",
+                "../14-hdr/shaders/skybox.frag"
             );
         }
         wasPressedLastFrame = true;
@@ -251,6 +238,7 @@ void OpenGLRenderer::render() {
     const glm::vec3 directionalLightDirection = glm::normalize(glm::vec3(-1.0f, -2.0f, -3.0f));
 
     constexpr float meshScale = 2.0f;
+    static float outlineWidth = 0.2f;
 
     {
         glBindVertexArray(cubeMesh.vao);
@@ -304,30 +292,6 @@ void OpenGLRenderer::render() {
         glStencilMask(0xFF);                        // enable writing to the stencil buffer
 
         glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0); // just draw the object
-
-        // second, we'll use the values in the stencil buffer to render an outline.
-        // the "outline" will just be the same mesh rendered again, but slightly enlarged and set to a single color.
-        // finally, we'll discard fragments which have a corresponding stencil value of 1, as that's where the mesh was already drawn.
-        // remember -- an outline is *around* the object, it shouldn't overwrite any work we've done with the previous draw call!
-
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);     // don't change the stencil buffer in any way, we're just reading from it
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);        // only pixels NOT equal to 1 will pass the test
-        glStencilMask(0x00);                        // disable writing to the stencil buffer -- this time we only want to read from it
-        glDepthFunc(GL_ALWAYS);                     // ignore depth when drawing the outline (we want to see it through walls e.g.) but still write it!
-
-        outlineShaders->enable(); // use shaders which don't do any interesting shading; just set a constant color
-        
-        outlineShaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(meshScale * 1.1f))); // enlarge the object a bit
-        outlineShaders->setUniform("view", camera->getViewMatrix());
-        outlineShaders->setUniform("projection", camera->getPerspectiveMatrix());
-
-        outlineShaders->setUniform("color", glm::vec4(1, 1, 0, 1));
-        
-        glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0); // draw the outline
-
-        glDepthFunc(GL_LEQUAL);             // bring back the default depth function
-        glDisable(GL_STENCIL_TEST);         // we don't need stencil testing anymore in later draws
-        glStencilMask(0xFF);                // bring back the default mask, so that `glClear` can properly clear the stencil buffer
     }
 
     {
@@ -346,6 +310,22 @@ void OpenGLRenderer::render() {
 
         glEnable(GL_CULL_FACE);
         glDepthFunc(GL_LESS);
+    }
+
+    {
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        if (ImGui::Begin("Renderer settings")) {
+            ImGui::SliderFloat("Outline width", &outlineWidth, 0.0f, 2.0f);
+
+            ImGui::End();
+        }
+
+        ImGui::EndFrame();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 }
 
