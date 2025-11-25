@@ -22,7 +22,7 @@ class OpenGLRenderer {
 
     std::unique_ptr<GLShaders> mainShaders;
     std::unique_ptr<GLShaders> basicColorShaders;
-    std::unique_ptr<GLShaders> basicTexturedShaders;
+    std::unique_ptr<GLShaders> hdrQuadShaders;
     std::unique_ptr<GLShaders> skyboxShaders;
 
     std::vector<MeshVertex> loadedMeshVertices;

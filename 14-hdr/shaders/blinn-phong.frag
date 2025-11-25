@@ -27,11 +27,12 @@ struct PointLight {
     float att_quadratic;
 };
 
-uniform DirectionalLight directional_light;
-uniform PointLight point_light;
+#define POINT_LIGHT_COUNT 2
 
-vec3 calc_directional_light() {
-    vec3 base_color = texture(color_texture, tex_coords).rgb;
+uniform DirectionalLight directional_light;
+uniform PointLight point_lights[POINT_LIGHT_COUNT];
+
+vec2 calc_directional_light() {
     vec3 normal = texture(normal_texture, tex_coords).rgb;
     normal = normal * 2.0 - 1.0; // [0,1] -> [-1,1]
     normal = TBN * normal; // tangent space -> world space
@@ -40,41 +41,30 @@ vec3 calc_directional_light() {
     vec3 view_direction = normalize(camera_position - position);
     vec3 halfway_direction = normalize(light_direction + view_direction);
 
-    float ambient_factor = 0.03f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
     float specular_factor = pow(max(dot(normal, halfway_direction), 0.0f), 64.0f);
 
-    vec3 ambient = ambient_factor * base_color;
-    vec3 diffuse = diffuse_factor * directional_light.color * base_color;
-    vec3 specular = specular_factor * directional_light.color;
-
-    return ambient + diffuse + specular;
+    return vec2(diffuse_factor, specular_factor);
 }
 
-vec3 calc_point_light() {
-    vec3 base_color = texture(color_texture, tex_coords).rgb;
+vec2 calc_point_light(uint index) {
     vec3 normal = texture(normal_texture, tex_coords).rgb;
     normal = normal * 2.0 - 1.0; // [0,1] -> [-1,1]
     normal = TBN * normal; // tangent space -> world space
 
-    vec3 light_direction = normalize(point_light.position - position);
+    vec3 light_direction = normalize(point_lights[index].position - position);
     vec3 view_direction = normalize(camera_position - position);
     vec3 halfway_direction = normalize(light_direction + view_direction);
 
-    float distance = length(point_light.position - position);
-    float attenuation = 1.0f / (point_light.att_constant
-                                + point_light.att_linear * distance
-                                + point_light.att_quadratic * distance * distance);
+    float distance = length(point_lights[index].position - position);
+    float attenuation = 1.0f / (point_lights[index].att_constant
+    + point_lights[index].att_linear * distance
+    + point_lights[index].att_quadratic * distance * distance);
 
-    float ambient_factor = 0.03f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
     float specular_factor = pow(max(dot(normal, halfway_direction), 0.0f), 64.0f);
 
-    vec3 ambient = ambient_factor * base_color;
-    vec3 diffuse = diffuse_factor * point_light.color * base_color;
-    vec3 specular = specular_factor * point_light.color;
-
-    return attenuation * (ambient + diffuse + specular);
+    return attenuation * vec2(diffuse_factor, specular_factor);
 }
 
 vec3 calc_reflected_color() {
@@ -89,11 +79,27 @@ vec3 calc_reflected_color() {
 }
 
 void main() {
-    vec3 color = calc_directional_light() + calc_point_light();
-    vec3 reflected_color = calc_reflected_color();
+    vec3 base_color = texture(color_texture, tex_coords).rgb;
+
+    const float ambient_factor = 0.03f;
+
+    vec2 directional_light_factors = calc_directional_light();
+
+    vec3 ambient  = ambient_factor * base_color;
+    vec3 diffuse  = directional_light_factors.x * directional_light.color;
+    vec3 specular = directional_light_factors.y * directional_light.color;
+
+    for (uint point_light_index = 0; point_light_index < POINT_LIGHT_COUNT; point_light_index++) {
+        vec2 point_light_factors = calc_point_light(point_light_index);
+        diffuse  += point_light_factors.x * point_lights[point_light_index].color;
+        specular += point_light_factors.y * point_lights[point_light_index].color;
+    }
+
+    diffuse *= base_color;
 
     float reflectivity = texture(reflectivity_texture, tex_coords).r;
-    color = mix(color, reflected_color, reflectivity);
+    vec3 reflected_color = calc_reflected_color();
 
+    vec3 color = ambient + mix(diffuse, reflected_color, reflectivity) + specular;
     out_color = vec4(color, 1.0f);
 }

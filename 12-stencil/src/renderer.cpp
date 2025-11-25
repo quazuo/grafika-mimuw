@@ -62,7 +62,7 @@ const std::vector<BasicVertex> cubeVertices{
     {{-1.0f,  1.0f, -1.0f}},
 };
 
-const std::vector<BasicTexturedVertex> tvQuadVertices{
+const std::vector<BasicTexturedVertex> screenSpaceQuadVertices{
     {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
     {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
     {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
@@ -148,7 +148,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         "../12-stencil/shaders/basic-color.vert",
         "../12-stencil/shaders/basic-color.frag"
     );
-    basicTexturedShaders = std::make_unique<GLShaders>(
+    hdrQuadShaders = std::make_unique<GLShaders>(
         "../12-stencil/shaders/basic-textured.vert",
         "../12-stencil/shaders/basic-textured.frag"
     );
@@ -211,7 +211,7 @@ void OpenGLRenderer::tickInputEvents() {
                 "../12-stencil/shaders/basic-color.vert",
                 "../12-stencil/shaders/basic-color.frag"
             );
-            basicTexturedShaders = std::make_unique<GLShaders>(
+            hdrQuadShaders = std::make_unique<GLShaders>(
                 "../12-stencil/shaders/basic-textured.vert",
                 "../12-stencil/shaders/basic-textured.frag"
             );

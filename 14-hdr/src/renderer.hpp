@@ -26,7 +26,7 @@ class OpenGLRenderer {
 
     std::unique_ptr<GLShaders> mainShaders;
     std::unique_ptr<GLShaders> basicColorShaders;
-    std::unique_ptr<GLShaders> basicTexturedShaders;
+    std::unique_ptr<GLShaders> hdrQuadShaders;
     std::unique_ptr<GLShaders> skyboxShaders;
 
     std::vector<MeshVertex> loadedMeshVertices;
@@ -34,11 +34,18 @@ class OpenGLRenderer {
 
     Mesh loadedMesh;
     Mesh cubeMesh;
+    Mesh texturedQuadMesh;
 
     GLuint colorTextureID;
     GLuint normalTextureID;
     GLuint reflectivityTextureID;
     GLuint cubemapTextureID;
+
+    GLuint hdrColorTextureID;
+    GLuint hdrDepthTextureID;
+
+    GLuint hdrFramebuffer;
+    glm::ivec2 hdrFramebufferSize;
 
     // camera stuff won't change too much; we're moving it to a separate class to avoid clutter
     std::unique_ptr<Camera> camera;
@@ -82,7 +89,7 @@ private:
 
     void calculateTbnVectors();
 
-    void initTvFramebuffer();
+    void initHdrFramebuffer();
 
     static void windowRefreshCallback(GLFWwindow *window);
 

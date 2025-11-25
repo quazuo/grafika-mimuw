@@ -62,7 +62,7 @@ const std::vector<BasicVertex> cubeVertices{
     {{-1.0f,  1.0f, -1.0f}},
 };
 
-const std::vector<BasicTexturedVertex> tvQuadVertices{
+const std::vector<BasicTexturedVertex> screenSpaceQuadVertices{
     {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
     {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
     {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
@@ -159,7 +159,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         "../13-imgui/shaders/basic-color.vert",
         "../13-imgui/shaders/basic-color.frag"
     );
-    basicTexturedShaders = std::make_unique<GLShaders>(
+    hdrQuadShaders = std::make_unique<GLShaders>(
         "../13-imgui/shaders/basic-textured.vert",
         "../13-imgui/shaders/basic-textured.frag"
     );
@@ -226,7 +226,7 @@ void OpenGLRenderer::tickInputEvents() {
                 "../13-imgui/shaders/basic-color.vert",
                 "../13-imgui/shaders/basic-color.frag"
             );
-            basicTexturedShaders = std::make_unique<GLShaders>(
+            hdrQuadShaders = std::make_unique<GLShaders>(
                 "../13-imgui/shaders/basic-textured.vert",
                 "../13-imgui/shaders/basic-textured.frag"
             );

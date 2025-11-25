@@ -62,7 +62,7 @@ const std::vector<BasicVertex> cubeVertices{
     {{-1.0f,  1.0f, -1.0f}},
 };
 
-const std::vector<BasicTexturedVertex> tvQuadVertices{
+const std::vector<BasicTexturedVertex> screenSpaceQuadVertices{
     {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
     {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
     {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
@@ -128,7 +128,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         "../11-framebuffer/shaders/basic-color.vert",
         "../11-framebuffer/shaders/basic-color.frag"
     );
-    basicTexturedShaders = std::make_unique<GLShaders>(
+    hdrQuadShaders = std::make_unique<GLShaders>(
         "../11-framebuffer/shaders/basic-textured.vert",
         "../11-framebuffer/shaders/basic-textured.frag"
     );
@@ -192,7 +192,7 @@ void OpenGLRenderer::tickInputEvents() {
                 "../11-framebuffer/shaders/basic-color.vert",
                 "../11-framebuffer/shaders/basic-color.frag"
             );
-            basicTexturedShaders = std::make_unique<GLShaders>(
+            hdrQuadShaders = std::make_unique<GLShaders>(
                 "../11-framebuffer/shaders/basic-textured.vert",
                 "../11-framebuffer/shaders/basic-textured.frag"
             );
@@ -226,15 +226,15 @@ void OpenGLRenderer::render() {
         glDisable(GL_CULL_FACE); // disable face culling for a moment as we want to view the quad from both directions
 
         glBindVertexArray(texturedQuadMesh.vao);
-        basicTexturedShaders->enable();
+        hdrQuadShaders->enable();
 
-        basicTexturedShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(-5, 0, 5)));
-        basicTexturedShaders->setUniform("view", camera->getViewMatrix());
-        basicTexturedShaders->setUniform("projection", camera->getPerspectiveMatrix());
+        hdrQuadShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(-5, 0, 5)));
+        hdrQuadShaders->setUniform("view", camera->getViewMatrix());
+        hdrQuadShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
-        basicTexturedShaders->setUniform("sampled_texture", 4);
+        hdrQuadShaders->setUniform("sampled_texture", 4);
 
-        glDrawArrays(GL_TRIANGLES, 0, tvQuadVertices.size());
+        glDrawArrays(GL_TRIANGLES, 0, screenSpaceQuadVertices.size());
 
         glEnable(GL_CULL_FACE);
     }
@@ -513,7 +513,7 @@ void OpenGLRenderer::prepareBuffers() {
 
         glGenBuffers(1, &texturedQuadMesh.vbo);
         glBindBuffer(GL_ARRAY_BUFFER, texturedQuadMesh.vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(BasicTexturedVertex) * tvQuadVertices.size(), tvQuadVertices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(BasicTexturedVertex) * screenSpaceQuadVertices.size(), screenSpaceQuadVertices.data(), GL_STATIC_DRAW);
 
         glVertexAttribPointer(
             0,
