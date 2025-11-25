@@ -250,7 +250,7 @@ void OpenGLRenderer::render() {
         glm::vec4(8.0f * glm::vec3(1.0f, 0.0f, 1.0f), 1.0f)
     };
 
-    constexpr glm::vec4 directionalLightColor = 4.0f * glm::vec4(1, 0.9, 0.8, 1.0f);
+    constexpr glm::vec4 directionalLightColor = 1.0f * glm::vec4(1, 0.9, 0.8, 1.0f);
     const glm::vec3 directionalLightDirection = glm::normalize(glm::vec3(-1.0f, -2.0f, -3.0f));
 
     constexpr float meshScale = 2.0f;
@@ -313,8 +313,8 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("point_lights[1].position", lightCubePositions[1]);
         mainShaders->setUniform("point_lights[1].color", glm::vec3(pointLightColors[1]));
         mainShaders->setUniform("point_lights[1].att_constant", 1.0f);
-        mainShaders->setUniform("point_lights[1].att_linear", 0.22f);
-        mainShaders->setUniform("point_lights[1].att_quadratic", 0.2f);
+        mainShaders->setUniform("point_lights[1].att_linear", 0.09f);
+        mainShaders->setUniform("point_lights[1].att_quadratic", 0.032f);
 
         // first we'll render the object as normal; but we will set the stencil values in corresponding pixels to 1
         // to remember where the object was on the screen:
