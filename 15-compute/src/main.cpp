@@ -7,7 +7,7 @@ int main(const int argc, char *argv[]) {
         throw std::runtime_error("Failed to initialize GLFW");
     }
 
-    OpenGLRenderer renderer {1200, 800};
+    OpenGLRenderer renderer {1024, 1024};
 
     while (!glfwWindowShouldClose(renderer.getWindow())) {
         renderer.tickInputEvents();

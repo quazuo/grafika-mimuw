@@ -2,6 +2,7 @@
 #define RENDERER_H
 
 #include <memory>
+#include <array>
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -24,31 +25,16 @@ class OpenGLRenderer {
     glm::ivec2 windowSize;
     GLFWwindow *window;
 
-    std::unique_ptr<GLGraphicsShaders> mainShaders;
-    std::unique_ptr<GLGraphicsShaders> basicColorShaders;
-    std::unique_ptr<GLGraphicsShaders> hdrQuadShaders;
-    std::unique_ptr<GLGraphicsShaders> skyboxShaders;
+    std::unique_ptr<GLGraphicsShaders> basicTexturedShaders;
+    std::unique_ptr<GLComputeShader> gameOfLifeShader;
 
-    std::vector<MeshVertex> loadedMeshVertices;
-    std::vector<GLuint> loadedMeshIndices;
-
-    Mesh loadedMesh;
-    Mesh cubeMesh;
     Mesh texturedQuadMesh;
 
-    GLuint colorTextureID;
-    GLuint normalTextureID;
-    GLuint reflectivityTextureID;
-    GLuint cubemapTextureID;
+    static constexpr size_t TEXTURES_COUNT = 2;
+    std::array<GLuint, TEXTURES_COUNT> gameOfLifeTextureIDs;
+    glm::ivec2 textureSize { 1024, 1024 };
 
-    GLuint hdrColorTextureID;
-    GLuint hdrDepthTextureID;
-
-    GLuint hdrFramebuffer;
-    glm::ivec2 hdrFramebufferSize;
-
-    // camera stuff won't change too much; we're moving it to a separate class to avoid clutter
-    std::unique_ptr<Camera> camera;
+    bool needRecreateShaders = false;
 
 public:
     OpenGLRenderer(int windowWidth, int windowHeight);
@@ -78,18 +64,12 @@ public:
      * Wraps up the rendering process.
      * Should be called after all rendering in the current tick has been finished.
      */
-    void finishRendering() const;
+    void finishRendering();
 
 private:
     void prepareBuffers();
 
-    void loadTextures();
-
-    void loadMesh();
-
-    void calculateTbnVectors();
-
-    void initHdrFramebuffer();
+    void createTextures();
 
     static void windowRefreshCallback(GLFWwindow *window);
 

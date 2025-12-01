@@ -1,0 +1,36 @@
+#version 430 core
+
+#define LOCAL_SIZE_X 16
+#define LOCAL_SIZE_Y 16
+#define LOCAL_SIZE_Z 1
+
+layout (local_size_x = LOCAL_SIZE_X, local_size_y = LOCAL_SIZE_Y, local_size_z = LOCAL_SIZE_Z) in;
+
+layout(r8) uniform image2D curr_state;
+layout(r8) uniform image2D next_state;
+
+void main() {
+    ivec2 texel_coord = ivec2(gl_GlobalInvocationID.xy);
+    uint my_value = imageLoad(curr_state, texel_coord).r == 0 ? 0 : 1;
+
+    int alive_neighbors_count = 0;
+
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (dx == 0 && dy == 0) continue;
+
+            ivec2 neighbor_texel_coord = texel_coord + ivec2(dx, dy);
+            uint neighbor_value = imageLoad(curr_state, neighbor_texel_coord).r == 0 ? 0 : 1;
+            alive_neighbors_count += neighbor_value == 0 ? 0 : 1;
+        }
+    }
+
+    uint my_new_value = 0;
+    if (my_value == 0) {
+        my_new_value = alive_neighbors_count == 3 ? 1 : 0;
+    } else {
+        my_new_value = (alive_neighbors_count == 2 || alive_neighbors_count == 3) ? 1 : 0;
+    }
+
+    imageStore(next_state, texel_coord, ivec4(my_new_value));
+}

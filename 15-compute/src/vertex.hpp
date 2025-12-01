@@ -83,11 +83,12 @@ const std::vector<BasicVertex> cubeVertices{
 
 const std::vector<BasicTexturedVertex> screenSpaceQuadVertices{
     {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
     {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
+    {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+
     {{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f}},
-    {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
     {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+    {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
 };
 
 #endif //VERTEX_HPP
