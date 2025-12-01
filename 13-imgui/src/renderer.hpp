@@ -24,11 +24,11 @@ class OpenGLRenderer {
     glm::ivec2 windowSize;
     GLFWwindow *window;
 
-    std::unique_ptr<GLShaders> mainShaders;
-    std::unique_ptr<GLShaders> basicColorShaders;
-    std::unique_ptr<GLShaders> hdrQuadShaders;
-    std::unique_ptr<GLShaders> skyboxShaders;
-    std::unique_ptr<GLShaders> outlineShaders;
+    std::unique_ptr<GLGraphicsShaders> mainShaders;
+    std::unique_ptr<GLGraphicsShaders> basicColorShaders;
+    std::unique_ptr<GLGraphicsShaders> hdrQuadShaders;
+    std::unique_ptr<GLGraphicsShaders> skyboxShaders;
+    std::unique_ptr<GLGraphicsShaders> outlineShaders;
 
     std::vector<MeshVertex> loadedMeshVertices;
     std::vector<GLuint> loadedMeshIndices;

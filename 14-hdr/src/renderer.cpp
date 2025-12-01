@@ -131,19 +131,19 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         ImGui_ImplOpenGL3_Init();
     }
 
-    mainShaders = std::make_unique<GLShaders>(
+    mainShaders = std::make_unique<GLGraphicsShaders>(
         "../14-hdr/shaders/blinn-phong.vert",
         "../14-hdr/shaders/blinn-phong.frag"
     );
-    basicColorShaders = std::make_unique<GLShaders>(
+    basicColorShaders = std::make_unique<GLGraphicsShaders>(
         "../14-hdr/shaders/basic-color.vert",
         "../14-hdr/shaders/basic-color.frag"
     );
-    hdrQuadShaders = std::make_unique<GLShaders>(
+    hdrQuadShaders = std::make_unique<GLGraphicsShaders>(
         "../14-hdr/shaders/basic-textured-hdr.vert",
         "../14-hdr/shaders/basic-textured-hdr.frag"
     );
-    skyboxShaders = std::make_unique<GLShaders>(
+    skyboxShaders = std::make_unique<GLGraphicsShaders>(
         "../14-hdr/shaders/skybox.vert",
         "../14-hdr/shaders/skybox.frag"
     );
@@ -199,19 +199,19 @@ void OpenGLRenderer::tickInputEvents() {
     static bool wasPressedLastFrame = false;
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
-            mainShaders = std::make_unique<GLShaders>(
+            mainShaders = std::make_unique<GLGraphicsShaders>(
                 "../14-hdr/shaders/blinn-phong.vert",
                 "../14-hdr/shaders/blinn-phong.frag"
             );
-            basicColorShaders = std::make_unique<GLShaders>(
+            basicColorShaders = std::make_unique<GLGraphicsShaders>(
                 "../14-hdr/shaders/basic-color.vert",
                 "../14-hdr/shaders/basic-color.frag"
             );
-            hdrQuadShaders = std::make_unique<GLShaders>(
+            hdrQuadShaders = std::make_unique<GLGraphicsShaders>(
                 "../14-hdr/shaders/basic-textured-hdr.vert",
                 "../14-hdr/shaders/basic-textured-hdr.frag"
             );
-            skyboxShaders = std::make_unique<GLShaders>(
+            skyboxShaders = std::make_unique<GLGraphicsShaders>(
                 "../14-hdr/shaders/skybox.vert",
                 "../14-hdr/shaders/skybox.frag"
             );

@@ -20,30 +20,15 @@ class OpenGLRenderer {
     glm::ivec2 windowSize;
     GLFWwindow *window;
 
-    std::unique_ptr<GLGraphicsShaders> mainShaders;
-    std::unique_ptr<GLGraphicsShaders> basicColorShaders;
-    std::unique_ptr<GLGraphicsShaders> hdrQuadShaders;
-    std::unique_ptr<GLGraphicsShaders> skyboxShaders;
+    std::unique_ptr<GLGraphicsShaders> mainShaders, basicColorShaders;
 
     std::vector<MeshVertex> loadedMeshVertices;
     std::vector<GLuint> loadedMeshIndices;
-
     Mesh loadedMesh;
     Mesh cubeMesh;
-    Mesh texturedQuadMesh;
 
     GLuint colorTextureID;
     GLuint normalTextureID;
-    GLuint reflectivityTextureID;
-    GLuint cubemapTextureID;
-
-    GLuint framebufferColorTextureID;
-    GLuint framebufferDepthTextureID;
-
-    GLuint tvFramebuffer;
-
-    static constexpr GLsizei tvFramebufferWidth = 400;
-    static constexpr GLsizei tvFramebufferHeight = 400;
 
     // camera stuff won't change too much; we're moving it to a separate class to avoid clutter
     std::unique_ptr<Camera> camera;
@@ -79,10 +64,6 @@ public:
     void finishRendering() const;
 
 private:
-    void renderScene();
-
-    void renderTvView();
-
     void prepareBuffers();
 
     void loadTextures();
@@ -90,8 +71,6 @@ private:
     void loadMesh();
 
     void calculateTbnVectors();
-
-    void initTvFramebuffer();
 
     static void windowRefreshCallback(GLFWwindow *window);
 

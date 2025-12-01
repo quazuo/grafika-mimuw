@@ -2,23 +2,22 @@
 #define SHADER_H
 
 #include <filesystem>
-#include <unordered_map>
 #include <vector>
 #include <map>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include <sstream>
 
 class GLShaders {
-    GLuint programID;
-
     std::map<std::string, GLint> uniformIDs {};
 
-public:
-    GLShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath);
+protected:
+    GLuint programID {};
 
-    ~GLShaders();
+    GLShaders();
+
+public:
+    virtual ~GLShaders();
 
     GLShaders(const GLShaders& other) = delete;
 
@@ -47,9 +46,24 @@ public:
 private:
     GLint getUniformID(const std::string &name);
 
+protected:
     GLuint compileShader(GLuint shaderKind, const std::filesystem::path &path) const;
 
-    void linkProgram(GLuint vertexShader, GLuint fragmentShader) const;
+    void linkProgram() const;
+};
+
+class GLGraphicsShaders final : public GLShaders {
+public:
+    GLGraphicsShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath);
+
+    virtual ~GLGraphicsShaders() = default;
+};
+
+class GLComputeShader final : public GLShaders {
+public:
+    GLComputeShader(const std::filesystem::path &shaderPath);
+
+    virtual ~GLComputeShader() = default;
 };
 
 #endif //SHADER_H

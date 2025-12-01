@@ -7,38 +7,28 @@
 #include "GLFW/glfw3.h"
 
 #include "utilities/gl-shader.hpp"
-#include "utilities/camera.hpp"
-#include "vertex.hpp"
-
-struct Mesh {
-    GLuint vbo = 0;
-    GLuint vao = 0;
-    GLuint ebo = 0;
-};
 
 class OpenGLRenderer {
     glm::ivec2 windowSize;
     GLFWwindow *window;
 
-    std::unique_ptr<GLGraphicsShaders> mainShaders;
-    std::unique_ptr<GLGraphicsShaders> basicColorShaders;
-    std::unique_ptr<GLGraphicsShaders> hdrQuadShaders;
-    std::unique_ptr<GLGraphicsShaders> skyboxShaders;
-    std::unique_ptr<GLGraphicsShaders> outlineShaders;
+    std::unique_ptr<GLGraphicsShaders> shaders;
 
-    std::vector<MeshVertex> loadedMeshVertices;
-    std::vector<GLuint> loadedMeshIndices;
+    GLuint vbo;
+    GLuint vao;
+    GLuint ebo;
 
-    Mesh loadedMesh;
-    Mesh cubeMesh;
+    bool is_free_camera = false;
+    glm::vec3 cameraPosition { 0, 0, -3 };
+    glm::vec2 cameraRotation { 0, 0 };
 
-    GLuint colorTextureID;
-    GLuint normalTextureID;
-    GLuint reflectivityTextureID;
-    GLuint cubemapTextureID;
+    float aspectRatio = 4.0f / 3.0f;
+    float fieldOfView = 80.0f;
+    float zNear = 0.1f;
+    float zFar = 500.0f;
 
-    // camera stuff won't change too much; we're moving it to a separate class to avoid clutter
-    std::unique_ptr<Camera> camera;
+    float movementSpeed = 0.01f;
+    float rotationSpeed = 0.006f;
 
 public:
     OpenGLRenderer(int windowWidth, int windowHeight);
@@ -73,11 +63,7 @@ public:
 private:
     void prepareBuffers();
 
-    void loadTextures();
-
-    void loadMesh();
-
-    void calculateTbnVectors();
+    glm::mat4 getViewMatrix() const;
 
     static void windowRefreshCallback(GLFWwindow *window);
 

@@ -73,7 +73,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = {windowWidth, windowHeight};
-    window     = glfwCreateWindow(windowWidth, windowHeight, "10-blending", nullptr, nullptr);
+    window     = glfwCreateWindow(windowWidth, windowHeight, "7-lighting", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -99,9 +99,6 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // final_color = alpha * new_color + (1 - alpha) * old_color
-
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
@@ -112,22 +109,17 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLGraphicsShaders>(
-        "../10-blending/shaders/blinn-phong.vert",
-        "../10-blending/shaders/blinn-phong.frag"
+        "../7-lighting/shaders/phong.vert",
+        "../7-lighting/shaders/phong.frag"
     );
     basicColorShaders = std::make_unique<GLGraphicsShaders>(
-        "../10-blending/shaders/basic-color.vert",
-        "../10-blending/shaders/basic-color.frag"
-    );
-    skyboxShaders = std::make_unique<GLGraphicsShaders>(
-        "../10-blending/shaders/skybox.vert",
-        "../10-blending/shaders/skybox.frag"
+        "../7-lighting/shaders/basic-color.vert",
+        "../7-lighting/shaders/basic-color.frag"
     );
 
     camera = std::make_unique<Camera>(window);
 
     loadMesh();
-    calculateTbnVectors();
     prepareBuffers();
 
     loadTextures();
@@ -146,9 +138,6 @@ OpenGLRenderer::~OpenGLRenderer() {
 
     const std::vector usedTextures {
         colorTextureID,
-        normalTextureID,
-        reflectivityTextureID,
-        cubemapTextureID,
     };
 
     glDeleteBuffers(static_cast<GLsizei>(usedBuffers.size()), usedBuffers.data());
@@ -167,16 +156,12 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../10-blending/shaders/blinn-phong.vert",
-                "../10-blending/shaders/blinn-phong.frag"
+                "../7-lighting/shaders/blinn-phong.vert",
+                "../7-lighting/shaders/blinn-phong.frag"
             );
             basicColorShaders = std::make_unique<GLGraphicsShaders>(
-                "../10-blending/shaders/basic-color.vert",
-                "../10-blending/shaders/basic-color.frag"
-            );
-            skyboxShaders = std::make_unique<GLGraphicsShaders>(
-                "../10-blending/shaders/skybox.vert",
-                "../10-blending/shaders/skybox.frag"
+                "../7-lighting/shaders/basic-color.vert",
+                "../7-lighting/shaders/basic-color.frag"
             );
         }
         wasPressedLastFrame = true;
@@ -190,7 +175,7 @@ void OpenGLRenderer::startRendering() {
 }
 
 void OpenGLRenderer::render() {
-    const float time = static_cast<float>(glfwGetTime());
+    const float time = glfwGetTime();
 
     constexpr float lightCubeScale = 0.05f;
     constexpr float lightOrbitRadius = 3.0f;
@@ -200,9 +185,9 @@ void OpenGLRenderer::render() {
         0.0f,
         glm::cos(time * timeScale)
     };
-    constexpr glm::vec4 pointLightColor { 1.0f, 0.0f, 0.0f, 1.0f };
+    const glm::vec3 pointLightColor { 1.0f, 0.0f, 0.0f };
 
-    constexpr glm::vec4 directionalLightColor { 1, 0.9, 0.8, 1.0f };
+    const glm::vec3 directionalLightColor = glm::vec3(1, 0.9, 0.8);
     const glm::vec3 directionalLightDirection = glm::normalize(glm::vec3(-1.0f, -2.0f, -3.0f));
 
     {
@@ -210,7 +195,7 @@ void OpenGLRenderer::render() {
         basicColorShaders->enable();
 
         basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePosition)
-                                              * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
+                                               * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
         basicColorShaders->setUniform("view", camera->getViewMatrix());
         basicColorShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
@@ -234,74 +219,19 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
         mainShaders->setUniform("color_texture", 0);
-        mainShaders->setUniform("normal_texture", 1);
-        mainShaders->setUniform("reflectivity_texture", 2);
-        mainShaders->setUniform("skybox_texture", 3);
+
         mainShaders->setUniform("camera_position", camera->getPosition());
 
         mainShaders->setUniform("directional_light.direction", directionalLightDirection);
-        mainShaders->setUniform("directional_light.color", glm::vec3(directionalLightColor));
+        mainShaders->setUniform("directional_light.color", directionalLightColor);
 
         mainShaders->setUniform("point_light.position", lightCubePosition);
-        mainShaders->setUniform("point_light.color", glm::vec3(pointLightColor));
+        mainShaders->setUniform("point_light.color", pointLightColor);
         mainShaders->setUniform("point_light.att_constant", 1.0f);
         mainShaders->setUniform("point_light.att_linear", 0.22f);
         mainShaders->setUniform("point_light.att_quadratic", 0.2f);
 
         glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
-    }
-
-    {
-        glDisable(GL_CULL_FACE);
-        glDepthFunc(GL_LEQUAL);
-
-        glBindVertexArray(cubeMesh.vao);
-        skyboxShaders->enable();
-
-        skyboxShaders->setUniform("view", camera->getSkyboxViewMatrix());
-        skyboxShaders->setUniform("projection", camera->getPerspectiveMatrix());
-
-        skyboxShaders->setUniform("skybox_texture", 3);
-
-        glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
-
-        glEnable(GL_CULL_FACE);
-        glDepthFunc(GL_LESS);
-    }
-
-    {
-        glDisable(GL_CULL_FACE); // disable face culling for now as we want to view the quads from both directions
-
-        glBindVertexArray(cubeMesh.vao);
-        basicColorShaders->enable();
-
-        // these 3 are easily sortable
-
-        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(1, 0, 5)));
-        basicColorShaders->setUniform("color", glm::vec4(1.0f, 0.0f, 0.0f, 0.3f));
-        glDrawArrays(GL_TRIANGLES, 0, 6); // just render one face of the cube as a quick hack to get a quad :)
-
-        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(0, 1, 6)));
-        basicColorShaders->setUniform("color", glm::vec4(0.0f, 1.0f, 0.0f, 0.7f));
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(-1, -1, 7)));
-        basicColorShaders->setUniform("color", glm::vec4(0.0f, 0.0f, 1.0f, 0.1f));
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        // edge case -- these are not sortable
-        // a more refined solution is needed here!
-
-        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(-1.0, 0, 15)));
-        basicColorShaders->setUniform("color", glm::vec4(1.0f, 1.0f, 0.0f, 0.3f));
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), glm::vec3(0, 0, 14))
-                                               * glm::rotate(glm::identity<glm::mat4>(), 3.14f / 2, glm::vec3(0, 1, 0)));
-        basicColorShaders->setUniform("color", glm::vec4(0.0f, 1.0f, 1.0f, 0.3f));
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        glEnable(GL_CULL_FACE);
     }
 }
 
@@ -354,26 +284,6 @@ void OpenGLRenderer::prepareBuffers() {
     );
     glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(
-        3,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(MeshVertex),
-        reinterpret_cast<void *>(offsetof(MeshVertex, tangent))
-    );
-    glEnableVertexAttribArray(3);
-
-    glVertexAttribPointer(
-        4,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(MeshVertex),
-        reinterpret_cast<void *>(offsetof(MeshVertex, bitangent))
-    );
-    glEnableVertexAttribArray(4);
-
     // light cube mesh
 
     glGenVertexArrays(1, &cubeMesh.vao);
@@ -395,113 +305,27 @@ void OpenGLRenderer::prepareBuffers() {
 }
 
 void OpenGLRenderer::loadTextures() {
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(true); // needed as the y-axis (or rather the v coordinate) is flipped
 
-    // color texture
-    {
-        int width, height, channelCount;
-        unsigned char *data = stbi_load("../assets/helmet/albedo.png", &width, &height, &channelCount, 0);
-        if (!data) {
-            throw std::runtime_error("failed to load texture!");
-        }
-
-        glGenTextures(1, &colorTextureID);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, colorTextureID);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        stbi_image_free(data);
+    int width, height, channelCount;
+    unsigned char *data = stbi_load("../assets/helmet/albedo.png", &width, &height, &channelCount, 0);
+    if (!data) {
+        throw std::runtime_error("failed to load texture!");
     }
 
-    // normal texture
-    {
-        int width, height, channelCount;
-        unsigned char *data = stbi_load("../assets/helmet/normal.png", &width, &height, &channelCount, 0);
-        if (!data) {
-            throw std::runtime_error("failed to load texture!");
-        }
+    glGenTextures(1, &colorTextureID);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, colorTextureID);
 
-        glGenTextures(1, &normalTextureID);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, normalTextureID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        stbi_image_free(data);
-    }
-
-    // reflectivity texture
-    {
-        int width, height, channelCount;
-        unsigned char *data = stbi_load("../assets/helmet/reflectivity.png", &width, &height, &channelCount, 0);
-        if (!data) {
-            throw std::runtime_error("failed to load texture!");
-        }
-
-        glGenTextures(1, &reflectivityTextureID);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, reflectivityTextureID);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        stbi_image_free(data);
-    }
-
-    // cubemap textures
-    {
-        const std::map<int, std::filesystem::path> cubemapTexturePaths {
-            { GL_TEXTURE_CUBE_MAP_POSITIVE_X, "../assets/skybox/right.jpg"  },
-            { GL_TEXTURE_CUBE_MAP_NEGATIVE_X, "../assets/skybox/left.jpg"   },
-            { GL_TEXTURE_CUBE_MAP_POSITIVE_Y, "../assets/skybox/top.jpg"    },
-            { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, "../assets/skybox/bottom.jpg" },
-            { GL_TEXTURE_CUBE_MAP_POSITIVE_Z, "../assets/skybox/front.jpg"  },
-            { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, "../assets/skybox/back.jpg"   },
-        };
-
-        glGenTextures(1, &cubemapTextureID);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTextureID);
-
-        stbi_set_flip_vertically_on_load(false);
-
-        for (const auto& [cubemapFaceID, path] : cubemapTexturePaths) {
-            int width, height, channelCount;
-            unsigned char *data = stbi_load(path.string().c_str(), &width, &height, &channelCount, 0);
-            if (!data) {
-                throw std::runtime_error("failed to load texture!");
-            }
-
-            glTexImage2D(cubemapFaceID, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-            stbi_image_free(data);
-        }
-
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    }
+    stbi_image_free(data);
 }
 
 void OpenGLRenderer::loadMesh() {
@@ -577,48 +401,6 @@ void OpenGLRenderer::loadMesh() {
 
             indexOffset += numFaceVertices;
         }
-    }
-}
-
-void OpenGLRenderer::calculateTbnVectors() {
-    const size_t triangleCount = static_cast<size_t>(loadedMeshIndices.size() / 3);
-
-    for (size_t i = 0; i < triangleCount; i++) {
-        const uint32_t index1 = loadedMeshIndices[i * 3 + 0];
-        const uint32_t index2 = loadedMeshIndices[i * 3 + 1];
-        const uint32_t index3 = loadedMeshIndices[i * 3 + 2];
-
-        MeshVertex& vertex1 = loadedMeshVertices[index1];
-        MeshVertex& vertex2 = loadedMeshVertices[index2];
-        MeshVertex& vertex3 = loadedMeshVertices[index3];
-
-        const glm::vec3 delta_pos_1 = vertex2.position - vertex1.position;
-        const glm::vec3 delta_pos_2 = vertex3.position - vertex1.position;
-
-        const glm::vec2 delta_uv_1 = vertex2.tex_coords - vertex1.tex_coords;
-        const glm::vec2 delta_uv_2 = vertex3.tex_coords - vertex1.tex_coords;
-
-        const float scale = 1.0f / (delta_uv_1.x * delta_uv_2.y - delta_uv_2.x * delta_uv_1.y);
-
-        const glm::vec3 tangent = scale * glm::vec3 {
-            delta_uv_2.y * delta_pos_1.x - delta_uv_1.y * delta_pos_2.x,
-            delta_uv_2.y * delta_pos_1.y - delta_uv_1.y * delta_pos_2.y,
-            delta_uv_2.y * delta_pos_1.z - delta_uv_1.y * delta_pos_2.z
-        };
-
-        const glm::vec3 bitangent = scale * glm::vec3 {
-            delta_uv_2.x * delta_pos_1.x - delta_uv_1.x * delta_pos_2.x,
-            delta_uv_2.x * delta_pos_1.y - delta_uv_1.x * delta_pos_2.y,
-            delta_uv_2.x * delta_pos_1.z - delta_uv_1.x * delta_pos_2.z
-        };
-
-        vertex1.tangent = tangent;
-        vertex2.tangent = tangent;
-        vertex3.tangent = tangent;
-
-        vertex1.bitangent = bitangent;
-        vertex2.bitangent = bitangent;
-        vertex3.bitangent = bitangent;
     }
 }
 

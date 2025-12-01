@@ -3,13 +3,8 @@
 #include <fstream>
 #include <iostream>
 
-GLShaders::GLShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath) {
+GLShaders::GLShaders() {
     programID = glCreateProgram();
-    const GLuint vertexShaderID = compileShader(GL_VERTEX_SHADER, vertexShaderPath);
-    const GLuint fragmentShaderID = compileShader(GL_FRAGMENT_SHADER, fragmentShaderPath);
-    linkProgram(vertexShaderID, fragmentShaderID);
-    glDeleteShader(vertexShaderID);
-    glDeleteShader(fragmentShaderID);
 }
 
 GLShaders::~GLShaders() {
@@ -115,9 +110,7 @@ GLuint GLShaders::compileShader(const GLuint shaderKind, const std::filesystem::
     return shaderID;
 }
 
-void GLShaders::linkProgram(const GLuint vertexShader, const GLuint fragmentShader) const {
-    glAttachShader(programID, vertexShader);
-    glAttachShader(programID, fragmentShader);
+void GLShaders::linkProgram() const {
     glLinkProgram(programID);
 
     // check the program
@@ -133,4 +126,21 @@ void GLShaders::linkProgram(const GLuint vertexShader, const GLuint fragmentShad
         std::cerr << errorMessage;
         throw std::runtime_error(errorMessage);
     }
+}
+
+GLGraphicsShaders::GLGraphicsShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath) {
+    const GLuint vertexShaderID = compileShader(GL_VERTEX_SHADER, vertexShaderPath);
+    const GLuint fragmentShaderID = compileShader(GL_FRAGMENT_SHADER, fragmentShaderPath);
+    glAttachShader(programID, vertexShaderID);
+    glAttachShader(programID, fragmentShaderID);
+    linkProgram();
+    glDeleteShader(vertexShaderID);
+    glDeleteShader(fragmentShaderID);
+}
+
+GLComputeShader::GLComputeShader(const std::filesystem::path &shaderPath) {
+    const GLuint shaderID = compileShader(GL_COMPUTE_SHADER, shaderPath);
+    glAttachShader(programID, shaderID);
+    linkProgram();
+    glDeleteShader(shaderID);
 }
