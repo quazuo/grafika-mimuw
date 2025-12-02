@@ -28,6 +28,7 @@ class OpenGLRenderer {
     std::unique_ptr<GLGraphicsShaders> basicColorShaders;
     std::unique_ptr<GLGraphicsShaders> hdrQuadShaders;
     std::unique_ptr<GLGraphicsShaders> skyboxShaders;
+    std::unique_ptr<GLComputeShader> oneDimBlurShader;
 
     std::vector<MeshVertex> loadedMeshVertices;
     std::vector<GLuint> loadedMeshIndices;
@@ -40,6 +41,8 @@ class OpenGLRenderer {
     GLuint normalTextureID;
     GLuint reflectivityTextureID;
     GLuint cubemapTextureID;
+
+    GLuint blurTemporaryTextureID;
 
     GLuint hdrColorTextureID;
     GLuint hdrDepthTextureID;
@@ -62,7 +65,7 @@ public:
     /**
      * Processes all pending input events, e.g. to move and rotate the camera.
      */
-    void tickInputEvents() const;
+    void tickInputEvents();
 
     /**
      * Starts the rendering process.
@@ -86,6 +89,8 @@ private:
     void prepareBuffers();
 
     void loadTextures();
+
+    void createTempBlurTexture();
 
     void loadMesh();
 

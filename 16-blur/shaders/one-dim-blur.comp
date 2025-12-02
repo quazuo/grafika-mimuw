@@ -1,0 +1,40 @@
+#version 430 core
+
+#define LOCAL_SIZE_X 16
+#define LOCAL_SIZE_Y 16
+#define LOCAL_SIZE_Z 1
+
+layout (local_size_x = LOCAL_SIZE_X, local_size_y = LOCAL_SIZE_Y, local_size_z = LOCAL_SIZE_Z) in;
+
+layout(rgba16f, binding = 0) uniform image2D input_image;
+layout(rgba16f, binding = 1) uniform image2D output_image;
+
+uniform bool is_horizontal;
+uniform int blur_radius;
+
+void main() {
+    ivec2 in_texel_coord  = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 out_texel_coord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 in_tex_size = imageSize(input_image);
+
+    vec4 output_color = vec4(0);
+
+    for (int i = -blur_radius; i <= blur_radius; i++) {
+        ivec2 neighbor_texel_coord = in_texel_coord + (is_horizontal ? ivec2(i, 0) : ivec2(0, i));
+
+        bool is_out_of_bounds = neighbor_texel_coord.x < 0
+                             || neighbor_texel_coord.x >= in_tex_size.x
+                             || neighbor_texel_coord.y < 0
+                             || neighbor_texel_coord.y >= in_tex_size.y;
+
+        if (is_out_of_bounds) {
+            output_color += imageLoad(input_image, in_texel_coord);
+        } else {
+            output_color += imageLoad(input_image, neighbor_texel_coord);
+        }
+    }
+
+    output_color /= 2 * blur_radius + 1;
+
+    imageStore(output_image, out_texel_coord, output_color);
+}

@@ -18,61 +18,8 @@
 #include "utilities/debug.hpp"
 #include "vertex.hpp"
 
-const std::vector<BasicVertex> cubeVertices{
-    {{ 1.0f, -1.0f, -1.0f}},
-    {{-1.0f, -1.0f, -1.0f}},
-    {{ 1.0f,  1.0f, -1.0f}},
-    {{-1.0f,  1.0f, -1.0f}},
-    {{ 1.0f,  1.0f, -1.0f}},
-    {{-1.0f, -1.0f, -1.0f}},
-
-    {{-1.0f, -1.0f,  1.0f}},
-    {{ 1.0f, -1.0f,  1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}},
-    {{-1.0f,  1.0f,  1.0f}},
-    {{-1.0f, -1.0f,  1.0f}},
-
-    {{-1.0f,  1.0f,  1.0f}},
-    {{-1.0f,  1.0f, -1.0f}},
-    {{-1.0f, -1.0f, -1.0f}},
-    {{-1.0f, -1.0f, -1.0f}},
-    {{-1.0f, -1.0f,  1.0f}},
-    {{-1.0f,  1.0f,  1.0f}},
-
-    {{ 1.0f,  1.0f, -1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}},
-    {{ 1.0f, -1.0f, -1.0f}},
-    {{ 1.0f, -1.0f,  1.0f}},
-    {{ 1.0f, -1.0f, -1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}},
-
-    {{-1.0f, -1.0f, -1.0f}},
-    {{ 1.0f, -1.0f, -1.0f}},
-    {{ 1.0f, -1.0f,  1.0f}},
-    {{ 1.0f, -1.0f,  1.0f}},
-    {{-1.0f, -1.0f,  1.0f}},
-    {{-1.0f, -1.0f, -1.0f}},
-
-    {{ 1.0f,  1.0f, -1.0f}},
-    {{-1.0f,  1.0f, -1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}},
-    {{-1.0f,  1.0f,  1.0f}},
-    {{ 1.0f,  1.0f,  1.0f}},
-    {{-1.0f,  1.0f, -1.0f}},
-};
-
-const std::vector<BasicTexturedVertex> screenSpaceQuadVertices{
-    {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
-    {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
-    {{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f}},
-    {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
-    {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
-};
-
 OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
@@ -82,7 +29,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = {windowWidth, windowHeight};
-    window     = glfwCreateWindow(windowWidth, windowHeight, "14-hdr", nullptr, nullptr);
+    window     = glfwCreateWindow(windowWidth, windowHeight, "16-blur", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -132,20 +79,23 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     }
 
     mainShaders = std::make_unique<GLGraphicsShaders>(
-        "../14-hdr/shaders/blinn-phong.vert",
-        "../14-hdr/shaders/blinn-phong.frag"
+        "../16-blur/shaders/blinn-phong.vert",
+        "../16-blur/shaders/blinn-phong.frag"
     );
     basicColorShaders = std::make_unique<GLGraphicsShaders>(
-        "../14-hdr/shaders/basic-color.vert",
-        "../14-hdr/shaders/basic-color.frag"
+        "../16-blur/shaders/basic-color.vert",
+        "../16-blur/shaders/basic-color.frag"
     );
     hdrQuadShaders = std::make_unique<GLGraphicsShaders>(
-        "../14-hdr/shaders/basic-textured-hdr.vert",
-        "../14-hdr/shaders/basic-textured-hdr.frag"
+        "../16-blur/shaders/basic-textured-hdr.vert",
+        "../16-blur/shaders/basic-textured-hdr.frag"
     );
     skyboxShaders = std::make_unique<GLGraphicsShaders>(
-        "../14-hdr/shaders/skybox.vert",
-        "../14-hdr/shaders/skybox.frag"
+        "../16-blur/shaders/skybox.vert",
+        "../16-blur/shaders/skybox.frag"
+    );
+    oneDimBlurShader = std::make_unique<GLComputeShader>(
+        "../16-blur/shaders/one-dim-blur.comp"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -155,6 +105,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     prepareBuffers();
 
     loadTextures();
+    createTempBlurTexture();
 
     initHdrFramebuffer();
 }
@@ -165,13 +116,15 @@ OpenGLRenderer::~OpenGLRenderer() {
     ImGui::DestroyContext();
 
     const std::vector usedBuffers {
-        loadedMesh.vbo, loadedMesh.ebo,
-        cubeMesh.vbo, cubeMesh.ebo,
+        loadedMesh.vbo,         loadedMesh.ebo,
+        cubeMesh.vbo,           cubeMesh.ebo,
+        texturedQuadMesh.vbo,   texturedQuadMesh.ebo,
     };
 
     const std::vector usedVertexArrays {
         loadedMesh.vao,
         cubeMesh.vao,
+        texturedQuadMesh.vao,
     };
 
     const std::vector usedTextures {
@@ -179,6 +132,7 @@ OpenGLRenderer::~OpenGLRenderer() {
         normalTextureID,
         reflectivityTextureID,
         cubemapTextureID,
+        blurTemporaryTextureID,
         hdrColorTextureID,
         hdrDepthTextureID,
     };
@@ -192,7 +146,7 @@ OpenGLRenderer::~OpenGLRenderer() {
     glfwTerminate();
 }
 
-void OpenGLRenderer::tickInputEvents() const {
+void OpenGLRenderer::tickInputEvents() {
     camera->tickInputEvents();
 }
 
@@ -201,20 +155,23 @@ void OpenGLRenderer::startRendering() {
 
     if (needRecreateShaders) {
         mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../16-bloom/shaders/blinn-phong.vert",
-                "../16-bloom/shaders/blinn-phong.frag"
+                "../16-blur/shaders/blinn-phong.vert",
+                "../16-blur/shaders/blinn-phong.frag"
             );
         basicColorShaders = std::make_unique<GLGraphicsShaders>(
-            "../16-bloom/shaders/basic-color.vert",
-            "../16-bloom/shaders/basic-color.frag"
+            "../16-blur/shaders/basic-color.vert",
+            "../16-blur/shaders/basic-color.frag"
         );
         hdrQuadShaders = std::make_unique<GLGraphicsShaders>(
-            "../16-bloom/shaders/basic-textured-hdr.vert",
-            "../16-bloom/shaders/basic-textured-hdr.frag"
+            "../16-blur/shaders/basic-textured-hdr.vert",
+            "../16-blur/shaders/basic-textured-hdr.frag"
         );
         skyboxShaders = std::make_unique<GLGraphicsShaders>(
-            "../16-bloom/shaders/skybox.vert",
-            "../16-bloom/shaders/skybox.frag"
+            "../16-blur/shaders/skybox.vert",
+            "../16-blur/shaders/skybox.frag"
+        );
+        oneDimBlurShader = std::make_unique<GLComputeShader>(
+            "../16-blur/shaders/one-dim-blur.comp"
         );
 
         needRecreateShaders = false;
@@ -258,6 +215,7 @@ void OpenGLRenderer::render() {
     constexpr float meshScale = 2.0f;
     static float outlineWidth = 0.2f;
     static float exposure = 0.5f;
+    static int blurRadius = 3;
 
     glBindFramebuffer(GL_FRAMEBUFFER, hdrFramebuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -342,6 +300,26 @@ void OpenGLRenderer::render() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     {
+        oneDimBlurShader->enable();
+
+        oneDimBlurShader->setUniform("blur_radius", blurRadius);
+
+        oneDimBlurShader->setUniform("is_horizontal", true);
+        glBindImageTexture(0, hdrColorTextureID,      0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+        glBindImageTexture(1, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+        glDispatchCompute(windowSize.x / 16, windowSize.y / 16, 1);
+
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+        oneDimBlurShader->setUniform("is_horizontal", false);
+        glBindImageTexture(0, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+        glBindImageTexture(1, hdrColorTextureID,      0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+        glDispatchCompute(windowSize.x / 16, windowSize.y / 16, 1);
+
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    }
+
+    {
         glDisable(GL_CULL_FACE);
         glBindVertexArray(texturedQuadMesh.vao);
         hdrQuadShaders->enable();
@@ -350,7 +328,7 @@ void OpenGLRenderer::render() {
         hdrQuadShaders->setUniform("view", glm::identity<glm::mat4>());
         hdrQuadShaders->setUniform("projection", glm::identity<glm::mat4>());
 
-        hdrQuadShaders->setUniform("sampled_texture", 4);
+        hdrQuadShaders->setUniform("sampled_texture", 5);
         hdrQuadShaders->setUniform("exposure", exposure);
 
         glDrawArrays(GL_TRIANGLES, 0, screenSpaceQuadVertices.size());
@@ -372,6 +350,7 @@ void OpenGLRenderer::render() {
             ImGui::SliderFloat("Time scale", &timeScale, 0.0f, 10.0f);
             ImGui::SliderFloat("Outline width", &outlineWidth, 0.0f, 2.0f);
             ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
+            ImGui::SliderInt("Blur radius", &blurRadius, 0, 20);
 
             ImGui::Text("Directional light");
             ImGui::ColorEdit3("Color##0", &directionalLightColor.x);
@@ -627,6 +606,19 @@ void OpenGLRenderer::loadTextures() {
     }
 }
 
+void OpenGLRenderer::createTempBlurTexture() {
+    glGenTextures(1, &blurTemporaryTextureID);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, blurTemporaryTextureID);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowSize.x, windowSize.y, 0, GL_RGBA, GL_FLOAT, nullptr);
+}
+
 void OpenGLRenderer::loadMesh() {
     tinyobj::ObjReaderConfig reader_config{};
     tinyobj::ObjReader reader{};
@@ -758,7 +750,7 @@ void OpenGLRenderer::initHdrFramebuffer() {
 
     { // color
         glGenTextures(1, &hdrColorTextureID);
-        glActiveTexture(GL_TEXTURE4);
+        glActiveTexture(GL_TEXTURE5);
         glBindTexture(GL_TEXTURE_2D, hdrColorTextureID);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowSize.x, windowSize.y,
@@ -772,7 +764,7 @@ void OpenGLRenderer::initHdrFramebuffer() {
 
     { // depth and stencil
         glGenTextures(1, &hdrDepthTextureID);
-        glActiveTexture(GL_TEXTURE5);
+        glActiveTexture(GL_TEXTURE6);
         glBindTexture(GL_TEXTURE_2D, hdrDepthTextureID);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowSize.x, windowSize.y,
@@ -793,6 +785,7 @@ void OpenGLRenderer::windowRefreshCallback(GLFWwindow *window) {
     OpenGLRenderer *renderer = static_cast<OpenGLRenderer *>(glfwGetWindowUserPointer(window));
     renderer->camera->updateAspectRatio();
     renderer->initHdrFramebuffer();
+    renderer->createTempBlurTexture();
     renderer->render();
     glfwSwapBuffers(window);
     glFinish(); // important, this waits until rendering result is actually visible, thus making resizing less ugly
