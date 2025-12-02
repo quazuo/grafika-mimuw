@@ -227,30 +227,37 @@ void OpenGLRenderer::startRendering() {
 }
 
 void OpenGLRenderer::render() {
-    const float time = static_cast<float>(glfwGetTime());
+    static float timeScale = 1.0f;
+    const float time = timeScale * static_cast<float>(glfwGetTime());
 
     constexpr float lightCubeScale = 0.05f;
     constexpr float lightOrbitRadius = 3.0f;
-    constexpr float timeScale = 1.0f;
 
     const std::vector<glm::vec3> lightCubePositions {
         lightOrbitRadius * glm::vec3 {
-            glm::sin(time * timeScale),
+            glm::sin(time),
             0.0f,
-            glm::cos(time * timeScale)
+            glm::cos(time)
         },
         lightOrbitRadius * glm::vec3 {
             0.0f,
-            glm::sin(time * timeScale),
-            glm::cos(time * timeScale)
+            glm::sin(time),
+            glm::cos(time)
         },
     };
-    const std::vector<glm::vec4> pointLightColors {
-        glm::vec4(15.0f * glm::vec3(1.0f, 0.0f, 0.0f), 1.0f),
-        glm::vec4(8.0f * glm::vec3(1.0f, 0.0f, 1.0f), 1.0f)
+
+    static std::vector<float> pointLightIntensities {
+        15.0f,
+        8.0f,
     };
 
-    constexpr glm::vec4 directionalLightColor = 1.0f * glm::vec4(1, 0.9, 0.8, 1.0f);
+    static std::vector<glm::vec4> pointLightColors {
+        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), // red
+        glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), // purple
+    };
+
+    static float directionalLightIntensity = 1.0f;
+    static glm::vec4 directionalLightColor = glm::vec4(1, 0.9, 0.8, 1.0f);
     const glm::vec3 directionalLightDirection = glm::normalize(glm::vec3(-1.0f, -2.0f, -3.0f));
 
     constexpr float meshScale = 2.0f;
@@ -302,16 +309,16 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("camera_position", camera->getPosition());
 
         mainShaders->setUniform("directional_light.direction", directionalLightDirection);
-        mainShaders->setUniform("directional_light.color", glm::vec3(directionalLightColor));
+        mainShaders->setUniform("directional_light.color", directionalLightIntensity * glm::vec3(directionalLightColor));
 
         mainShaders->setUniform("point_lights[0].position", lightCubePositions[0]);
-        mainShaders->setUniform("point_lights[0].color", glm::vec3(pointLightColors[0]));
+        mainShaders->setUniform("point_lights[0].color", pointLightIntensities[0] * glm::vec3(pointLightColors[0]));
         mainShaders->setUniform("point_lights[0].att_constant", 1.0f);
         mainShaders->setUniform("point_lights[0].att_linear", 0.22f);
         mainShaders->setUniform("point_lights[0].att_quadratic", 0.2f);
 
         mainShaders->setUniform("point_lights[1].position", lightCubePositions[1]);
-        mainShaders->setUniform("point_lights[1].color", glm::vec3(pointLightColors[1]));
+        mainShaders->setUniform("point_lights[1].color", pointLightIntensities[1] * glm::vec3(pointLightColors[1]));
         mainShaders->setUniform("point_lights[1].att_constant", 1.0f);
         mainShaders->setUniform("point_lights[1].att_linear", 0.09f);
         mainShaders->setUniform("point_lights[1].att_quadratic", 0.032f);
@@ -369,8 +376,28 @@ void OpenGLRenderer::render() {
         ImGui::NewFrame();
 
         if (ImGui::Begin("Renderer settings")) {
+            ImGui::PushItemWidth(300);
+
+            ImGui::SliderFloat("Time scale", &timeScale, 0.0f, 10.0f);
             ImGui::SliderFloat("Outline width", &outlineWidth, 0.0f, 2.0f);
             ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
+
+            ImGui::Text("Directional light");
+            ImGui::ColorEdit3("Color##0", &directionalLightColor.x);
+            ImGui::SameLine();
+            ImGui::SliderFloat("Intensity##0", &directionalLightIntensity, 0.0f, 20.0f);
+
+            ImGui::Text("Point light 1");
+            ImGui::ColorEdit3("Color##1", &pointLightColors[0].x);
+            ImGui::SameLine();
+            ImGui::SliderFloat("Intensity##1", &pointLightIntensities[0], 0.0f, 20.0f);
+
+            ImGui::Text("Point light 2");
+            ImGui::ColorEdit3("Color##2", &pointLightColors[1].x);
+            ImGui::SameLine();
+            ImGui::SliderFloat("Intensity##2", &pointLightIntensities[1], 0.0f, 20.0f);
+
+            ImGui::PopItemWidth();
 
             ImGui::End();
         }
