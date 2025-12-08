@@ -96,7 +96,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         "../17-bloom/shaders/skybox.frag"
     );
     oneDimBlurShader = std::make_unique<GLComputeShader>(
-        "../17-bloom/shaders/one-dim-blur.comp"
+        "../17-bloom/shaders/1d-gaussian-blur.comp"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -172,7 +172,7 @@ void OpenGLRenderer::startRendering() {
             "../17-bloom/shaders/skybox.frag"
         );
         oneDimBlurShader = std::make_unique<GLComputeShader>(
-            "../17-bloom/shaders/one-dim-blur.comp"
+            "../17-bloom/shaders/1d-gaussian-blur-blur.comp"
         );
 
         needRecreateShaders = false;
@@ -240,10 +240,10 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("view", camera->getViewMatrix());
         mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
-        mainShaders->setUniform("color_texture", 0);
-        mainShaders->setUniform("normal_texture", 1);
-        mainShaders->setUniform("reflectivity_texture", 2);
-        mainShaders->setUniform("skybox_texture", 3);
+        mainShaders->setUniform("color_texture", TexSlots::BASE_COLOR);
+        mainShaders->setUniform("normal_texture", TexSlots::NORMAL);
+        mainShaders->setUniform("reflectivity_texture", TexSlots::REFLECTIVITY);
+        mainShaders->setUniform("skybox_texture", TexSlots::CUBEMAP);
 
         mainShaders->setUniform("camera_position", camera->getPosition());
         mainShaders->setUniform("bloom_threshold", bloomThreshold);
@@ -308,7 +308,7 @@ void OpenGLRenderer::render() {
     //     skyboxShaders->setUniform("view", camera->getSkyboxViewMatrix());
     //     skyboxShaders->setUniform("projection", camera->getPerspectiveMatrix());
     //
-    //     skyboxShaders->setUniform("skybox_texture", 3);
+    //     skyboxShaders->setUniform("skybox_texture", TexSlots::CUBEMAP);
     //
     //     glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
     //
@@ -353,8 +353,8 @@ void OpenGLRenderer::render() {
         hdrQuadShaders->setUniform("view", glm::identity<glm::mat4>());
         hdrQuadShaders->setUniform("projection", glm::identity<glm::mat4>());
 
-        hdrQuadShaders->setUniform("main_color_texture", 5);
-        hdrQuadShaders->setUniform("bloom_texture", 6);
+        hdrQuadShaders->setUniform("main_color_texture", TexSlots::HDR_COLOR);
+        hdrQuadShaders->setUniform("bloom_texture", TexSlots::HDR_BLOOM);
         hdrQuadShaders->setUniform("exposure", exposure);
 
         glDrawArrays(GL_TRIANGLES, 0, screenSpaceQuadVertices.size());
@@ -538,7 +538,7 @@ void OpenGLRenderer::loadTextures() {
         }
 
         glGenTextures(1, &colorTextureID);
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0 + TexSlots::BASE_COLOR);
         glBindTexture(GL_TEXTURE_2D, colorTextureID);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -561,7 +561,7 @@ void OpenGLRenderer::loadTextures() {
         }
 
         glGenTextures(1, &normalTextureID);
-        glActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE0 + TexSlots::NORMAL);
         glBindTexture(GL_TEXTURE_2D, normalTextureID);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -584,7 +584,7 @@ void OpenGLRenderer::loadTextures() {
         }
 
         glGenTextures(1, &reflectivityTextureID);
-        glActiveTexture(GL_TEXTURE2);
+        glActiveTexture(GL_TEXTURE0 + TexSlots::REFLECTIVITY);
         glBindTexture(GL_TEXTURE_2D, reflectivityTextureID);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -610,7 +610,7 @@ void OpenGLRenderer::loadTextures() {
         };
 
         glGenTextures(1, &cubemapTextureID);
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE0 + TexSlots::CUBEMAP);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTextureID);
 
         stbi_set_flip_vertically_on_load(false);
@@ -638,7 +638,7 @@ void OpenGLRenderer::loadTextures() {
 
 void OpenGLRenderer::createTempBlurTexture() {
     glGenTextures(1, &blurTemporaryTextureID);
-    glActiveTexture(GL_TEXTURE4);
+    glActiveTexture(GL_TEXTURE0 + TexSlots::BLUR_TEMP);
     glBindTexture(GL_TEXTURE_2D, blurTemporaryTextureID);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -780,7 +780,7 @@ void OpenGLRenderer::initHdrFramebuffer() {
 
     { // color
         glGenTextures(1, &hdrColorTextureID);
-        glActiveTexture(GL_TEXTURE5);
+        glActiveTexture(GL_TEXTURE0 + TexSlots::HDR_COLOR);
         glBindTexture(GL_TEXTURE_2D, hdrColorTextureID);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowSize.x, windowSize.y,
@@ -794,7 +794,7 @@ void OpenGLRenderer::initHdrFramebuffer() {
     
     { // thresholded bloom color
         glGenTextures(1, &hdrBloomTextureID);
-        glActiveTexture(GL_TEXTURE6);
+        glActiveTexture(GL_TEXTURE0 + TexSlots::HDR_BLOOM);
         glBindTexture(GL_TEXTURE_2D, hdrBloomTextureID);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowSize.x, windowSize.y,
@@ -811,7 +811,7 @@ void OpenGLRenderer::initHdrFramebuffer() {
 
     { // depth and stencil
         glGenTextures(1, &hdrDepthTextureID);
-        glActiveTexture(GL_TEXTURE7);
+        glActiveTexture(GL_TEXTURE0 + TexSlots::HDR_DEPTH);
         glBindTexture(GL_TEXTURE_2D, hdrDepthTextureID);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, windowSize.x, windowSize.y,

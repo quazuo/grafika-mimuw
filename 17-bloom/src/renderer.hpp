@@ -37,6 +37,17 @@ class OpenGLRenderer {
     Mesh cubeMesh;
     Mesh texturedQuadMesh;
 
+    enum TexSlots {
+        BASE_COLOR   = 0,
+        NORMAL       = 1,
+        REFLECTIVITY = 2,
+        CUBEMAP      = 3,
+        BLUR_TEMP    = 4,
+        HDR_COLOR    = 5,
+        HDR_BLOOM    = 6,
+        HDR_DEPTH    = 7,
+    };
+
     GLuint colorTextureID;
     GLuint normalTextureID;
     GLuint reflectivityTextureID;
