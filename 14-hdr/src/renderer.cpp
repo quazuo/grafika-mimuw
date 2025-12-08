@@ -222,8 +222,13 @@ void OpenGLRenderer::startRendering() {
 }
 
 void OpenGLRenderer::render() {
+    static float unscaledTime = 0.0f;
+    static float time = 0.0f;
     static float timeScale = 1.0f;
-    const float time = timeScale * static_cast<float>(glfwGetTime());
+
+    const float deltaTime = static_cast<float>(glfwGetTime()) - unscaledTime;
+    time += deltaTime * timeScale;
+    unscaledTime = static_cast<float>(glfwGetTime());
 
     constexpr float lightCubeScale = 0.05f;
     constexpr float lightOrbitRadius = 3.0f;
@@ -271,14 +276,14 @@ void OpenGLRenderer::render() {
         basicColorShaders->setUniform("view", camera->getViewMatrix());
         basicColorShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
-        basicColorShaders->setUniform("color", pointLightColors[0]);
+        basicColorShaders->setUniform("color", pointLightIntensities[0] * pointLightColors[0]);
 
         glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
 
         basicColorShaders->setUniform("model", glm::translate(glm::identity<glm::mat4>(), lightCubePositions[1])
                                               * glm::scale(glm::identity<glm::mat4>(), glm::vec3(lightCubeScale)));
 
-        basicColorShaders->setUniform("color", pointLightColors[1]);
+        basicColorShaders->setUniform("color", pointLightIntensities[1] * pointLightColors[1]);
 
         glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
 

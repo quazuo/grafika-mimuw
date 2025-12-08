@@ -135,8 +135,13 @@ void OpenGLRenderer::startRendering() {
 }
 
 void OpenGLRenderer::render() {
-    const float time = static_cast<float>(glfwGetTime());
+    static float unscaledTime = 0.0f;
+    static float time = 0.0f;
     static float timeScale = 1.0f;
+
+    const float deltaTime = static_cast<float>(glfwGetTime()) - unscaledTime;
+    time += deltaTime * timeScale;
+    unscaledTime = static_cast<float>(glfwGetTime());
 
     const GLint readTextureIdx = static_cast<size_t>(timeScale * time) % 2;
     const GLint writtenTextureIdx = 1 - readTextureIdx;
