@@ -6,8 +6,8 @@
 
 layout (local_size_x = LOCAL_SIZE_X, local_size_y = LOCAL_SIZE_Y, local_size_z = LOCAL_SIZE_Z) in;
 
-layout(rgba16f, binding = 0) uniform image2D input_image;
-layout(rgba16f, binding = 1) uniform image2D output_image;
+layout(rgba16f, binding = 0) uniform readonly  image2D input_image;
+layout(rgba16f, binding = 1) uniform writeonly image2D output_image;
 
 uniform bool is_horizontal;
 uniform int blur_radius;
@@ -28,6 +28,7 @@ void main() {
                              || neighbor_texel_coord.y >= in_tex_size.y;
 
         if (is_out_of_bounds) {
+            // duplicate the center pixel when we read out of bounds
             output_color += imageLoad(input_image, in_texel_coord);
         } else {
             output_color += imageLoad(input_image, neighbor_texel_coord);

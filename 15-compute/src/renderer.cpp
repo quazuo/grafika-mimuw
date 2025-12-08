@@ -139,18 +139,20 @@ void OpenGLRenderer::render() {
     static float time = 0.0f;
     static float timeScale = 1.0f;
 
+    const GLint lastReadTextureIdx = static_cast<GLint>(time) % 2;
+
     const float deltaTime = static_cast<float>(glfwGetTime()) - unscaledTime;
     time += deltaTime * timeScale;
     unscaledTime = static_cast<float>(glfwGetTime());
 
-    const GLint readTextureIdx = static_cast<size_t>(timeScale * time) % 2;
+    const GLint readTextureIdx = static_cast<GLint>(time) % 2;
     const GLint writtenTextureIdx = 1 - readTextureIdx;
 
-    {
+    if (lastReadTextureIdx != readTextureIdx) {
         gameOfLifeShader->enable();
 
-        gameOfLifeShader->setUniform("curr_state", readTextureIdx);
-        gameOfLifeShader->setUniform("next_state", writtenTextureIdx);
+        glBindImageTexture(0, gameOfLifeTextureIDs[readTextureIdx],    0, GL_FALSE, 0, GL_READ_ONLY,  GL_R8);
+        glBindImageTexture(1, gameOfLifeTextureIDs[writtenTextureIdx], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R8);
 
         glDispatchCompute(textureSize.x / 16, textureSize.y / 16, 1);
 
@@ -253,8 +255,6 @@ void OpenGLRenderer::createTextures() {
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, textureSize.x, textureSize.y,
                      0, GL_RED, GL_UNSIGNED_BYTE, textureData.data());
-
-        glBindImageTexture(i, gameOfLifeTextureIDs[i], 0, GL_FALSE, 0, GL_READ_WRITE, GL_R8);
     }
 }
 
