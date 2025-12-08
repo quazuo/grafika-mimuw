@@ -46,6 +46,7 @@ class OpenGLRenderer {
         HDR_COLOR    = 5,
         HDR_BLOOM    = 6,
         HDR_DEPTH    = 7,
+        NONE         = 8,
     };
 
     GLuint colorTextureID;

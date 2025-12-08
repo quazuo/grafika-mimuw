@@ -224,6 +224,7 @@ void OpenGLRenderer::render() {
     static int blurRadius = 3;
     static float bloomThreshold = 10.0f;
     static int blurRepeatCount = 5;
+    static bool isBloomEnabled = true;
 
     // next rendering calls will write to the separate HDR framebuffer
 
@@ -320,26 +321,28 @@ void OpenGLRenderer::render() {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // run the compute shader twice, once for each blur direction
+    // run the compute shader to blur the bloom color image
 
-    for (int i = 0; i < blurRepeatCount; ++i) {
-        oneDimBlurShader->enable();
+    if (isBloomEnabled) {
+        for (int i = 0; i < blurRepeatCount; ++i) {
+            oneDimBlurShader->enable();
 
-        oneDimBlurShader->setUniform("blur_radius", blurRadius);
+            oneDimBlurShader->setUniform("blur_radius", blurRadius);
 
-        oneDimBlurShader->setUniform("is_horizontal", true);
-        glBindImageTexture(0, hdrBloomTextureID,      0, GL_FALSE, 0, GL_READ_ONLY,  GL_RGBA16F);
-        glBindImageTexture(1, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-        glDispatchCompute(windowSize.x / 16, windowSize.y / 16, 1);
+            oneDimBlurShader->setUniform("is_horizontal", true);
+            glBindImageTexture(0, hdrBloomTextureID,      0, GL_FALSE, 0, GL_READ_ONLY,  GL_RGBA16F);
+            glBindImageTexture(1, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+            glDispatchCompute(windowSize.x / 16, windowSize.y / 16, 1);
 
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-        oneDimBlurShader->setUniform("is_horizontal", false);
-        glBindImageTexture(0, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_READ_ONLY,  GL_RGBA16F);
-        glBindImageTexture(1, hdrBloomTextureID,      0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-        glDispatchCompute(windowSize.x / 16, windowSize.y / 16, 1);
+            oneDimBlurShader->setUniform("is_horizontal", false);
+            glBindImageTexture(0, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_READ_ONLY,  GL_RGBA16F);
+            glBindImageTexture(1, hdrBloomTextureID,      0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+            glDispatchCompute(windowSize.x / 16, windowSize.y / 16, 1);
 
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        }
     }
 
     // finally use the results from previous passes to show the result to the window
@@ -354,7 +357,7 @@ void OpenGLRenderer::render() {
         hdrQuadShaders->setUniform("projection", glm::identity<glm::mat4>());
 
         hdrQuadShaders->setUniform("main_color_texture", TexSlots::HDR_COLOR);
-        hdrQuadShaders->setUniform("bloom_texture", TexSlots::HDR_BLOOM);
+        hdrQuadShaders->setUniform("bloom_texture", isBloomEnabled ? TexSlots::HDR_BLOOM : TexSlots::NONE);
         hdrQuadShaders->setUniform("exposure", exposure);
 
         glDrawArrays(GL_TRIANGLES, 0, screenSpaceQuadVertices.size());
@@ -378,6 +381,7 @@ void OpenGLRenderer::render() {
             ImGui::SliderFloat("Time scale", &timeScale, 0.0f, 10.0f);
             ImGui::SliderFloat("Outline width", &outlineWidth, 0.0f, 2.0f);
             ImGui::SliderFloat("Exposure", &exposure, 0.0f, 10.0f);
+            ImGui::Checkbox("Enable bloom", &isBloomEnabled);
             ImGui::SliderInt("Blur radius", &blurRadius, 0, 20);
             ImGui::SliderInt("Blur repeat count", &blurRepeatCount, 0, 10);
             ImGui::SliderFloat("Bloom threshold", &bloomThreshold, 0.0f, 20.0f);
