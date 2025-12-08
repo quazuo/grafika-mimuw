@@ -222,8 +222,12 @@ void OpenGLRenderer::render() {
     static float exposure = 0.5f;
     static int blurRadius = 3;
 
+    // next rendering calls will write to the separate HDR framebuffer
+
     glBindFramebuffer(GL_FRAMEBUFFER, hdrFramebuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // render cubes representing light sources
 
     {
         glBindVertexArray(cubeMesh.vao);
@@ -251,6 +255,8 @@ void OpenGLRenderer::render() {
 
         glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
     }
+
+    // render the main mesh
 
     {
         glBindVertexArray(loadedMesh.vao);
@@ -284,6 +290,8 @@ void OpenGLRenderer::render() {
         glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0); // just draw the object
     }
 
+    // render the skybox
+
     {
         glDisable(GL_CULL_FACE);
         glDepthFunc(GL_LEQUAL);
@@ -302,7 +310,11 @@ void OpenGLRenderer::render() {
         glDepthFunc(GL_LESS);
     }
 
+    // now we draw to the main (window) framebuffer
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // run the compute shader twice, once for each blur direction
 
     {
         oneDimBlurShader->enable();
@@ -310,19 +322,21 @@ void OpenGLRenderer::render() {
         oneDimBlurShader->setUniform("blur_radius", blurRadius);
 
         oneDimBlurShader->setUniform("is_horizontal", true);
-        glBindImageTexture(0, hdrColorTextureID,      0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
-        glBindImageTexture(1, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+        glBindImageTexture(0, hdrColorTextureID,      0, GL_FALSE, 0, GL_READ_ONLY,  GL_RGBA16F);
+        glBindImageTexture(1, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
         glDispatchCompute(windowSize.x / 16, windowSize.y / 16, 1);
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
         oneDimBlurShader->setUniform("is_horizontal", false);
-        glBindImageTexture(0, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
-        glBindImageTexture(1, hdrColorTextureID,      0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA16F);
+        glBindImageTexture(0, blurTemporaryTextureID, 0, GL_FALSE, 0, GL_READ_ONLY,  GL_RGBA16F);
+        glBindImageTexture(1, hdrColorTextureID,      0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
         glDispatchCompute(windowSize.x / 16, windowSize.y / 16, 1);
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }
+
+    // finally use the results from previous passes to show the result to the window
 
     {
         glDisable(GL_CULL_FACE);
@@ -339,6 +353,8 @@ void OpenGLRenderer::render() {
         glDrawArrays(GL_TRIANGLES, 0, screenSpaceQuadVertices.size());
         glEnable(GL_CULL_FACE);
     }
+
+    // render the GUI
 
     {
         ImGui_ImplOpenGL3_NewFrame();
