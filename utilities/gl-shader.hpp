@@ -29,6 +29,12 @@ public:
 
     void setUniform(const std::string& name, GLint value);
 
+    void setUniform(const std::string& name, const glm::ivec2& value);
+
+    void setUniform(const std::string& name, const glm::ivec3& value);
+
+    void setUniform(const std::string& name, const glm::ivec4& value);
+
     void setUniform(const std::string& name, float value);
 
     void setUniform(const std::string& name, const glm::vec2& value);

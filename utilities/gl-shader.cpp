@@ -20,6 +20,21 @@ void GLShaders::setUniform(const std::string &name, const GLint value) {
     glUniform1i(uniformID, value);
 }
 
+void GLShaders::setUniform(const std::string &name, const glm::ivec2 &value) {
+    const GLint uniformID = getUniformID(name);
+    glUniform2i(uniformID, value.x, value.y);
+}
+
+void GLShaders::setUniform(const std::string &name, const glm::ivec3 &value) {
+    const GLint uniformID = getUniformID(name);
+    glUniform3i(uniformID, value.x, value.y, value.z);
+}
+
+void GLShaders::setUniform(const std::string &name, const glm::ivec4 &value) {
+    const GLint uniformID = getUniformID(name);
+    glUniform4i(uniformID, value.x, value.y, value.z, value.w);
+}
+
 void GLShaders::setUniform(const std::string &name, const float value) {
     const GLint uniformID = getUniformID(name);
     glUniform1f(uniformID, value);
@@ -63,7 +78,7 @@ GLint GLShaders::getUniformID(const std::string &name) {
 
     const GLint id = glGetUniformLocation(programID, name.c_str());
     if (id == -1) {
-        throw std::runtime_error("failed to get uniform with name: " + name);
+        std::cout << "failed to get uniform with name: " << name << "\n";
     }
 
     uniformIDs.emplace(name, id);
