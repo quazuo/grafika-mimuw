@@ -26,13 +26,10 @@ class OpenGLRenderer {
     GLFWwindow *window;
 
     std::unique_ptr<GLGraphicsShaders> raymarchShaders;
-    std::unique_ptr<GLComputeShader> gameOfLifeShader;
 
     Mesh texturedQuadMesh;
 
-    static constexpr size_t TEXTURES_COUNT = 2;
-    std::array<GLuint, TEXTURES_COUNT> gameOfLifeTextureIDs;
-    glm::ivec2 textureSize { 1024, 1024 };
+    std::unique_ptr<Camera> camera;
 
     bool needRecreateShaders = false;
 

@@ -30,7 +30,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 #endif
 
     windowSize = {windowWidth, windowHeight};
-    window     = glfwCreateWindow(windowWidth, windowHeight, "15-compute", nullptr, nullptr);
+    window     = glfwCreateWindow(windowWidth, windowHeight, "19-raymarching", nullptr, nullptr);
     if (!window) {
         const char *desc;
         const int code = glfwGetError(&desc);
@@ -76,12 +76,11 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
         ImGui_ImplOpenGL3_Init();
     }
 
+    camera = std::make_unique<Camera>(window);
+
     raymarchShaders = std::make_unique<GLGraphicsShaders>(
-        "../15-compute/shaders/basic-textured.vert",
-        "../15-compute/shaders/basic-textured.frag"
-    );
-    gameOfLifeShader = std::make_unique<GLComputeShader>(
-        "../15-compute/shaders/game-of-life.comp"
+        "../19-raymarching/shaders/raymarch.vert",
+        "../19-raymarching/shaders/raymarch.frag"
     );
 
     prepareBuffers();
@@ -101,21 +100,15 @@ OpenGLRenderer::~OpenGLRenderer() {
         texturedQuadMesh.vao
     };
 
-    const std::vector usedTextures {
-        gameOfLifeTextureIDs[0],
-        gameOfLifeTextureIDs[1],
-    };
-
     glDeleteBuffers(static_cast<GLsizei>(usedBuffers.size()), usedBuffers.data());
     glDeleteVertexArrays(static_cast<GLsizei>(usedVertexArrays.size()), usedVertexArrays.data());
-    glDeleteTextures(static_cast<GLsizei>(usedTextures.size()), usedTextures.data());
 
     glfwDestroyWindow(window);
     glfwTerminate();
 }
 
 void OpenGLRenderer::tickInputEvents() {
-    // nothing here this time
+    camera->tickInputEvents();
 }
 
 void OpenGLRenderer::startRendering() {
@@ -123,11 +116,8 @@ void OpenGLRenderer::startRendering() {
 
     if (needRecreateShaders) {
         raymarchShaders = std::make_unique<GLGraphicsShaders>(
-            "../15-compute/shaders/basic-textured.vert",
-            "../15-compute/shaders/basic-textured.frag"
-        );
-        gameOfLifeShader = std::make_unique<GLComputeShader>(
-            "../15-compute/shaders/game-of-life.comp"
+            "../19-raymarching/shaders/raymarch.vert",
+            "../19-raymarching/shaders/raymarch.frag"
         );
 
         needRecreateShaders = false;
@@ -139,37 +129,33 @@ void OpenGLRenderer::render() {
     static float time = 0.0f;
     static float timeScale = 1.0f;
 
-    const GLint lastReadTextureIdx = static_cast<GLint>(time) % 2;
-
     const float deltaTime = static_cast<float>(glfwGetTime()) - unscaledTime;
     time += deltaTime * timeScale;
     unscaledTime = static_cast<float>(glfwGetTime());
-
-    const GLint readTextureIdx = static_cast<GLint>(time) % 2;
-    const GLint writtenTextureIdx = 1 - readTextureIdx;
-
-    if (lastReadTextureIdx != readTextureIdx) {
-        gameOfLifeShader->enable();
-
-        glBindImageTexture(0, gameOfLifeTextureIDs[readTextureIdx],    0, GL_FALSE, 0, GL_READ_ONLY,  GL_R8);
-        glBindImageTexture(1, gameOfLifeTextureIDs[writtenTextureIdx], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R8);
-
-        glDispatchCompute(textureSize.x / 16, textureSize.y / 16, 1);
-
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-    }
 
     {
         raymarchShaders->enable();
         glBindVertexArray(texturedQuadMesh.vao);
 
-        raymarchShaders->setUniform("model", glm::identity<glm::mat4>());
-        raymarchShaders->setUniform("view", glm::identity<glm::mat4>());
-        raymarchShaders->setUniform("projection", glm::identity<glm::mat4>());
+        raymarchShaders->setUniform("inverse_vp", glm::inverse(camera->getPerspectiveMatrix() * camera->getViewMatrix()));
+        raymarchShaders->setUniform("aspect_ratio", static_cast<float>(windowSize.x) / static_cast<float>(windowSize.y));
 
-        raymarchShaders->setUniform("sampled_texture", readTextureIdx);
+        raymarchShaders->setUniform("camera_pos", camera->getPosition());
 
-        glDrawArrays(GL_TRIANGLES, 0, screenSpaceQuadVertices.size());
+        raymarchShaders->setUniform("sphere.center", glm::vec3(0, 0.25 * sin(time + 42.0f), 0));
+        raymarchShaders->setUniform("sphere.radius", 1.0f);
+        raymarchShaders->setUniform("sphere.color", glm::vec3(1, 0, 0));
+
+        raymarchShaders->setUniform("cube.center", glm::vec3(2 + sin(time), 0, 0));
+        raymarchShaders->setUniform("cube.half_size", glm::vec3(0.7f));
+        raymarchShaders->setUniform("cube.color", glm::vec3(0, 1, 0));
+
+        raymarchShaders->setUniform("torus.center", glm::vec3(-2 - sin(time), 0, 0));
+        raymarchShaders->setUniform("torus.minor_radius", 0.25f);
+        raymarchShaders->setUniform("torus.major_radius", 0.5f);
+        raymarchShaders->setUniform("torus.color", glm::vec3(0, 0, 1));
+
+        glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(screenSpaceQuadVertices.size()));
     }
 
     {
@@ -183,6 +169,9 @@ void OpenGLRenderer::render() {
             }
 
             ImGui::SliderFloat("Time scale", &timeScale, 0.0f, 10.0f);
+
+            const glm::vec3 cameraPos = camera->getPosition();
+            ImGui::Text("Camera position: %f %f %f", cameraPos.x, cameraPos.y, cameraPos.z);
 
             ImGui::End();
         }
@@ -231,31 +220,6 @@ void OpenGLRenderer::prepareBuffers() {
 
 void OpenGLRenderer::createTextures() {
     stbi_set_flip_vertically_on_load(true);
-
-    for (size_t i = 0; i < TEXTURES_COUNT; ++i) {
-        glGenTextures(1, &gameOfLifeTextureIDs[i]);
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, gameOfLifeTextureIDs[i]);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        std::random_device dev;
-        std::mt19937 rng(dev());
-        std::uniform_int_distribution<std::mt19937::result_type> dist(0, 1);
-
-        std::vector<std::uint8_t> textureData(textureSize.x * textureSize.y, 0);
-        for (int x = 0; x < textureSize.x; ++x) {
-            for (int y = 0; y < textureSize.y; ++y) {
-                textureData[textureSize.x * y + x] = dist(rng);
-            }
-        }
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, textureSize.x, textureSize.y,
-                     0, GL_RED, GL_UNSIGNED_BYTE, textureData.data());
-    }
 }
 
 void OpenGLRenderer::windowRefreshCallback(GLFWwindow *window) {
@@ -268,9 +232,11 @@ void OpenGLRenderer::windowRefreshCallback(GLFWwindow *window) {
 
 void OpenGLRenderer::framebufferSizeCallback(GLFWwindow *window, const int width, const int height) {
     if (width > 0 && height > 0) {
-        // glViewport(0, 0, width, height);
-        //
-        // OpenGLRenderer *renderer = static_cast<OpenGLRenderer *>(glfwGetWindowUserPointer(window));
-        // renderer->windowSize = { width, height };
+        glViewport(0, 0, width, height);
+
+        OpenGLRenderer *renderer = static_cast<OpenGLRenderer *>(glfwGetWindowUserPointer(window));
+        renderer->windowSize = { width, height };
+
+        renderer->camera->updateAspectRatio();
     }
 }

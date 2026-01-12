@@ -12,7 +12,7 @@ class Camera {
     glm::vec3 position { 0, 0, 10 };
     glm::vec2 rotation { 3.14f, 0 };
 
-    float aspectRatio = 4.0f / 3.0f;
+    float aspectRatio;
     float fieldOfView = 80.0f;
     float zNear = 0.01f;
     float zFar = 500.0f;
@@ -21,7 +21,7 @@ class Camera {
     float rotationSpeed = 0.01f;
 
 public:
-    Camera(GLFWwindow* w) : window(w) {}
+    Camera(GLFWwindow* w) : window(w) { updateAspectRatio(); }
 
     glm::vec3 getPosition() const { return position; }
 
