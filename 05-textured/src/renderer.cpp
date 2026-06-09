@@ -106,8 +106,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     shaders = std::make_unique<GLGraphicsShaders>(
-        "../5-textured/shaders/main.vert",
-        "../5-textured/shaders/main.frag"
+        "../05-textured/shaders/main.vert",
+        "../05-textured/shaders/main.frag"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -135,8 +135,8 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             shaders = std::make_unique<GLGraphicsShaders>(
-                "../5-textured/shaders/main.vert",
-                "../5-textured/shaders/main.frag"
+                "../05-textured/shaders/main.vert",
+                "../05-textured/shaders/main.frag"
             );
         }
         wasPressedLastFrame = true;

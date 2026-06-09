@@ -109,12 +109,12 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLGraphicsShaders>(
-        "../7-lighting/shaders/phong.vert",
-        "../7-lighting/shaders/phong.frag"
+        "../07-lighting/shaders/phong.vert",
+        "../07-lighting/shaders/phong.frag"
     );
     basicColorShaders = std::make_unique<GLGraphicsShaders>(
-        "../7-lighting/shaders/basic-color.vert",
-        "../7-lighting/shaders/basic-color.frag"
+        "../07-lighting/shaders/basic-color.vert",
+        "../07-lighting/shaders/basic-color.frag"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -156,12 +156,12 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../7-lighting/shaders/blinn-phong.vert",
-                "../7-lighting/shaders/blinn-phong.frag"
+                "../07-lighting/shaders/blinn-phong.vert",
+                "../07-lighting/shaders/blinn-phong.frag"
             );
             basicColorShaders = std::make_unique<GLGraphicsShaders>(
-                "../7-lighting/shaders/basic-color.vert",
-                "../7-lighting/shaders/basic-color.frag"
+                "../07-lighting/shaders/basic-color.vert",
+                "../07-lighting/shaders/basic-color.frag"
             );
         }
         wasPressedLastFrame = true;
