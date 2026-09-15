@@ -102,8 +102,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     shaders = std::make_unique<GLGraphicsShaders>(
-        "../4-icosahedron-moving/shaders/main.vert",
-        "../4-icosahedron-moving/shaders/main.frag"
+        "../04-icosahedron-moving/shaders/main.vert",
+        "../04-icosahedron-moving/shaders/main.frag"
     );
 
     prepareBuffers();
@@ -154,8 +154,8 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             shaders = std::make_unique<GLGraphicsShaders>(
-                "../4-icosahedron-moving/shaders/main.vert",
-                "../4-icosahedron-moving/shaders/main.frag"
+                "../04-icosahedron-moving/shaders/main.vert",
+                "../04-icosahedron-moving/shaders/main.frag"
             );
         }
         wasPressedLastFrame = true;

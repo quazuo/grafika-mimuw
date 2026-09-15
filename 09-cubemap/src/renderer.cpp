@@ -109,16 +109,16 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwSetWindowUserPointer(window, this);
 
     mainShaders = std::make_unique<GLGraphicsShaders>(
-        "../9-cubemap/shaders/blinn-phong.vert",
-        "../9-cubemap/shaders/blinn-phong.frag"
+        "../09-cubemap/shaders/blinn-phong.vert",
+        "../09-cubemap/shaders/blinn-phong.frag"
     );
     basicColorShaders = std::make_unique<GLGraphicsShaders>(
-        "../9-cubemap/shaders/basic-color.vert",
-        "../9-cubemap/shaders/basic-color.frag"
+        "../09-cubemap/shaders/basic-color.vert",
+        "../09-cubemap/shaders/basic-color.frag"
     );
     skyboxShaders = std::make_unique<GLGraphicsShaders>(
-        "../9-cubemap/shaders/skybox.vert",
-        "../9-cubemap/shaders/skybox.frag"
+        "../09-cubemap/shaders/skybox.vert",
+        "../09-cubemap/shaders/skybox.frag"
     );
 
     camera = std::make_unique<Camera>(window);
@@ -164,16 +164,16 @@ void OpenGLRenderer::tickInputEvents() {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
             mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../9-cubemap/shaders/blinn-phong.vert",
-                "../9-cubemap/shaders/blinn-phong.frag"
+                "../09-cubemap/shaders/blinn-phong.vert",
+                "../09-cubemap/shaders/blinn-phong.frag"
             );
             basicColorShaders = std::make_unique<GLGraphicsShaders>(
-                "../9-cubemap/shaders/basic-color.vert",
-                "../9-cubemap/shaders/basic-color.frag"
+                "../09-cubemap/shaders/basic-color.vert",
+                "../09-cubemap/shaders/basic-color.frag"
             );
             skyboxShaders = std::make_unique<GLGraphicsShaders>(
-                "../9-cubemap/shaders/skybox.vert",
-                "../9-cubemap/shaders/skybox.frag"
+                "../09-cubemap/shaders/skybox.vert",
+                "../09-cubemap/shaders/skybox.frag"
             );
         }
         wasPressedLastFrame = true;
