@@ -35,7 +35,7 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     // make it current on this thread
     glfwMakeContextCurrent(window);
 
-    // enable VSync
+    // enable VSync (explained further inside the `finishRendering()` function)
     glfwSwapInterval(1);
 
     // initialize GLEW
@@ -51,13 +51,13 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     // set the color of an empty window to black
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    // enable debug information
+    // enable debug logging using our pre-defined callback
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
 #endif
 
-    // set callbacks for resizing
+    // set callbacks for refreshing and resizing the window
     glfwSetWindowRefreshCallback(window, windowRefreshCallback);
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
 
@@ -81,7 +81,18 @@ void OpenGLRenderer::render() {
 }
 
 void OpenGLRenderer::finishRendering() const {
+    // swap the front and back buffers of our current window.
+    // - the "front buffer" is the part of memory that contains what is visible in the window at the current point in time.
+    // - the "back buffer" is the part of memory that isn't seen on the screen. this is the memory we end up writing to
+    //   when we render images using OpenGL.
+    //
+    // because we called `glfwSwapInterval(1)` in the constructor, this function also waits until the next screen refresh
+    // before swapping the buffers. this eliminates screen tearing, which could occur if we swapped the front and back
+    // buffers immediately without waiting for the screen to finish scanning the front buffer onto the screen.
     glfwSwapBuffers(window);
+
+    // process any pending "events" for the window: resizing, keyboard inputs, mouse movement, etc...
+    // this calls user registered callbacks when applicable -- so the two callbacks we set in the constructor
     glfwPollEvents();
 }
 
