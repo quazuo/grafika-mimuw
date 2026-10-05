@@ -82,7 +82,7 @@ void OpenGLRenderer::finishRendering() const {
 
 void OpenGLRenderer::prepareBuffers() {
     const std::vector<Vertex> vertices {
-        { .position = { 0.5f, -0.5f, 1.0f}, .color = {1.0f, 0.0f, 0.0f} },
+        { .position = { 0.5f, -0.5f, 0.0f}, .color = {1.0f, 0.0f, 0.0f} },
         { .position = {-0.5f, -0.5f, 0.0f}, .color = {0.0f, 1.0f, 0.0f} },
         { .position = { 0.0f,  0.5f, 0.0f}, .color = {0.0f, 0.0f, 1.0f} }
     };
