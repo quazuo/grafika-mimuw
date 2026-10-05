@@ -106,11 +106,11 @@ void OpenGLRenderer::prepareBuffers() {
     glEnableVertexAttribArray(0);
 
     glVertexAttribPointer(
-        1,                      // index of configured vertex attribute (here: color)
-        3,                      // size of configured vertex attribute (again it's a vec3, so 3 components)
-        GL_FLOAT,               // type of data stored in the attribute (float)
-        GL_FALSE,               // do we want the data to be normalized? (no)
-        sizeof(Vertex),         // stride = how many bytes between each vertex
+        1,                          // index of configured vertex attribute (here: color)
+        3,                          // size of configured vertex attribute (again it's a vec3, so 3 components)
+        GL_FLOAT,                   // type of data stored in the attribute (float)
+        GL_FALSE,                   // do we want the data to be normalized? (no)
+        sizeof(Vertex),             // stride = how many bytes between each vertex
         // offset of where the data begins. for legacy reasons, this is a pointer
         reinterpret_cast<void *>(offsetof(Vertex, color))
     );
