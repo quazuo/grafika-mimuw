@@ -134,6 +134,10 @@ void OpenGLRenderer::prepareBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
+    // Element Buffer Object (EBO) - a buffer object with a specific purpose of indexing into other VBOs.
+    // whenever we use an EBO (in conjunction with glDrawElements) we don't iterate over the vertex attributes like before.
+    // instead, we iterate over indices, and using those indices read specific vertices from the VBOs.
+    // this process happens fully transparently on the GPU, so we don't actually need to do any indexing in our shader.
     glGenBuffers(1, &ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_STATIC_DRAW);
