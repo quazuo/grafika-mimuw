@@ -20,7 +20,6 @@ public:
     virtual ~GLShaders();
 
     GLShaders(const GLShaders& other) = delete;
-
     GLShaders& operator=(const GLShaders& other) = delete;
 
     GLuint getID() const { return programID; }

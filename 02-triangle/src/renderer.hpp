@@ -14,8 +14,8 @@ class OpenGLRenderer {
     std::unique_ptr<GLGraphicsShaders> shaders;
 
     // we'll be calling these "vbo" and "vao" in the future programs, but we'll leave the long names for now
-    GLuint vbo;
-    GLuint vao;
+    GLuint vertexBufferObject;
+    GLuint vertexArrayObject;
 
 public:
     OpenGLRenderer(int windowWidth, int windowHeight);

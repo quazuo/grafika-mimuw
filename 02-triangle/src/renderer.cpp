@@ -59,8 +59,8 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
 }
 
 OpenGLRenderer::~OpenGLRenderer() {
-    glDeleteBuffers(1, &vbo);
-    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vertexBufferObject);
+    glDeleteVertexArrays(1, &vertexArrayObject);
     glfwDestroyWindow(window);
     glfwTerminate();
 }
@@ -87,11 +87,24 @@ void OpenGLRenderer::prepareBuffers() {
         { .position = { 0.0f,  0.5f, 0.0f}, .color = {0.0f, 0.0f, 1.0f} }
     };
 
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    // Vertex Array Object (VAO) - a "table" managing references to vertex buffer objects
+    glGenVertexArrays(1, &vertexArrayObject);
+    // we "bind" the VAO we just created, which means "from now on, when we refer to a VAO, it's this one right here"
+    glBindVertexArray(vertexArrayObject);
 
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // Vertex Buffer Object (VBO) - a buffer that lives in GPU memory, containing vertices for the models we'll be drawing to the screen
+    glGenBuffers(1, &vertexBufferObject);
+    // we "bind" the VBO just like we did with the VAO a few lines before, except now we bind the VBO to the GL_ARRAY_BUFFER "slot".
+    // since buffer objects can have more uses than storing vertices, there are multiple bind points we can use.
+    // see the table at: https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml
+    // from now on, when we refer to the GL_ARRAY_BUFFER slot, OpenGL will know that we're talking about the VBO we bound to this slot.
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+
+    // upload data from the CPU (the std::vector `vertices`) to this buffer object that lives on the GPU
+    //
+    // notice that we're not referring to the specific ID of the object; we only refer to `GL_ARRAY_BUFFER`:
+    // in the previous line we bound our VBO to the GL_ARRAY_BUFFER slot, so from now on, whenever we refer to this slot,
+    // OpenGL knows that we mean the VBO we referred to back then (the one whose ID is in the `vertexBufferObject` variable).
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(
