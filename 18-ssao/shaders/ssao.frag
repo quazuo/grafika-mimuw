@@ -21,7 +21,10 @@ void main() {
     vec3 frag_pos = texture(g_position, tex_coords).xyz;
     vec3 normal = normalize(texture(g_normal, tex_coords).xyz);
 
-    if (normal == vec3(0)) discard;
+    if (normal == vec3(0)) {
+        out_ssao = vec4(0);
+        return;
+    }
 
     vec2 noise_scale = vec2(window_size) / 4.0;
     vec3 random_vec = texture(sample_noise, tex_coords * noise_scale).xyz;

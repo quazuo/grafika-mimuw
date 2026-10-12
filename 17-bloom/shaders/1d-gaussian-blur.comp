@@ -44,7 +44,7 @@ void main() {
         sum_weights += gaussian_weight;
     }
 
-    output_color /= sum_weights; // 2 * blur_radius + 1;
+    output_color /= sum_weights;
 
     imageStore(output_image, out_texel_coord, output_color);
 }
