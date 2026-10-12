@@ -17,7 +17,7 @@ class Camera {
     float zNear = 0.01f;
     float zFar = 500.0f;
 
-    float movementSpeed = 0.01f;
+    float movementSpeed = 0.02f;
     float rotationSpeed = 0.01f;
 
 public:
