@@ -163,18 +163,9 @@ void OpenGLRenderer::tickInputEvents() {
     static bool wasPressedLastFrame = false;
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
-            mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../09-cubemap/shaders/blinn-phong.vert",
-                "../09-cubemap/shaders/blinn-phong.frag"
-            );
-            basicColorShaders = std::make_unique<GLGraphicsShaders>(
-                "../09-cubemap/shaders/basic-color.vert",
-                "../09-cubemap/shaders/basic-color.frag"
-            );
-            skyboxShaders = std::make_unique<GLGraphicsShaders>(
-                "../09-cubemap/shaders/skybox.vert",
-                "../09-cubemap/shaders/skybox.frag"
-            );
+            mainShaders->reload();
+            basicColorShaders->reload();
+            skyboxShaders->reload();
         }
         wasPressedLastFrame = true;
     } else {

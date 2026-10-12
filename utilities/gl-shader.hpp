@@ -26,6 +26,8 @@ public:
 
     void enable() const;
 
+    void reload();
+
     void setUniform(const std::string& name, GLint value);
 
     void setUniform(const std::string& name, const glm::ivec2& value);
@@ -55,20 +57,33 @@ protected:
     GLuint compileShader(GLuint shaderKind, const std::filesystem::path &path) const;
 
     void linkProgram() const;
+
+    virtual void load() = 0;
 };
 
 class GLGraphicsShaders final : public GLShaders {
+    std::filesystem::path vertexShaderPath;
+    std::filesystem::path fragmentShaderPath;
+
 public:
     GLGraphicsShaders(const std::filesystem::path &vertexShaderPath, const std::filesystem::path &fragmentShaderPath);
 
     virtual ~GLGraphicsShaders() = default;
+
+protected:
+    void load() override;
 };
 
 class GLComputeShader final : public GLShaders {
+    std::filesystem::path shaderPath;
+
 public:
     GLComputeShader(const std::filesystem::path &shaderPath);
 
     virtual ~GLComputeShader() = default;
+
+protected:
+    void load() override;
 };
 
 #endif //SHADER_H

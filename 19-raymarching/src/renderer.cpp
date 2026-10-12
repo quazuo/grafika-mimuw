@@ -115,10 +115,7 @@ void OpenGLRenderer::startRendering() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     if (needRecreateShaders) {
-        raymarchShaders = std::make_unique<GLGraphicsShaders>(
-            "../19-raymarching/shaders/raymarch.vert",
-            "../19-raymarching/shaders/raymarch.frag"
-        );
+        raymarchShaders->reload();
 
         needRecreateShaders = false;
     }

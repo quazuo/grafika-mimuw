@@ -122,13 +122,8 @@ void OpenGLRenderer::startRendering() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     if (needRecreateShaders) {
-        raymarchShaders = std::make_unique<GLGraphicsShaders>(
-            "../15-compute/shaders/basic-textured.vert",
-            "../15-compute/shaders/basic-textured.frag"
-        );
-        gameOfLifeShader = std::make_unique<GLComputeShader>(
-            "../15-compute/shaders/game-of-life.comp"
-        );
+        raymarchShaders->reload();
+        gameOfLifeShader->reload();
 
         needRecreateShaders = false;
     }

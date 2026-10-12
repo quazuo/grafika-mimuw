@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -153,10 +154,7 @@ void OpenGLRenderer::tickInputEvents() {
     static bool wasPressedLastFrame = false;
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
-            shaders = std::make_unique<GLGraphicsShaders>(
-                "../04-icosahedron-moving/shaders/main.vert",
-                "../04-icosahedron-moving/shaders/main.frag"
-            );
+            shaders->reload();
         }
         wasPressedLastFrame = true;
     } else {

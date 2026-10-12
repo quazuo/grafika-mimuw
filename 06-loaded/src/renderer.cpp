@@ -96,10 +96,7 @@ void OpenGLRenderer::tickInputEvents() {
     static bool wasPressedLastFrame = false;
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
-            shaders = std::make_unique<GLGraphicsShaders>(
-                "../06-loaded/shaders/main.vert",
-                "../06-loaded/shaders/main.frag"
-            );
+            shaders->reload();
         }
         wasPressedLastFrame = true;
     } else {

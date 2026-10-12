@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
+#include <iostream>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -134,10 +135,7 @@ void OpenGLRenderer::tickInputEvents() {
     static bool wasPressedLastFrame = false;
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
-            shaders = std::make_unique<GLGraphicsShaders>(
-                "../05-textured/shaders/main.vert",
-                "../05-textured/shaders/main.frag"
-            );
+            shaders->reload();
         }
         wasPressedLastFrame = true;
     } else {

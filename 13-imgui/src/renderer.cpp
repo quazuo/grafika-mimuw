@@ -218,26 +218,11 @@ void OpenGLRenderer::tickInputEvents() {
     static bool wasPressedLastFrame = false;
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
-            mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../13-imgui/shaders/blinn-phong.vert",
-                "../13-imgui/shaders/blinn-phong.frag"
-            );
-            basicColorShaders = std::make_unique<GLGraphicsShaders>(
-                "../13-imgui/shaders/basic-color.vert",
-                "../13-imgui/shaders/basic-color.frag"
-            );
-            hdrQuadShaders = std::make_unique<GLGraphicsShaders>(
-                "../13-imgui/shaders/basic-textured.vert",
-                "../13-imgui/shaders/basic-textured.frag"
-            );
-            skyboxShaders = std::make_unique<GLGraphicsShaders>(
-                "../13-imgui/shaders/skybox.vert",
-                "../13-imgui/shaders/skybox.frag"
-            );
-            outlineShaders = std::make_unique<GLGraphicsShaders>(
-                "../13-imgui/shaders/outline.vert",
-                "../13-imgui/shaders/outline.frag"
-            );
+            mainShaders->reload();
+            basicColorShaders->reload();
+            hdrQuadShaders->reload();
+            skyboxShaders->reload();
+            outlineShaders->reload();
         }
         wasPressedLastFrame = true;
     } else {

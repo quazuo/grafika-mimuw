@@ -200,22 +200,10 @@ void OpenGLRenderer::startRendering() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     if (needRecreateShaders) {
-        mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../16-bloom/shaders/blinn-phong.vert",
-                "../16-bloom/shaders/blinn-phong.frag"
-            );
-        basicColorShaders = std::make_unique<GLGraphicsShaders>(
-            "../16-bloom/shaders/basic-color.vert",
-            "../16-bloom/shaders/basic-color.frag"
-        );
-        hdrQuadShaders = std::make_unique<GLGraphicsShaders>(
-            "../16-bloom/shaders/basic-textured-hdr.vert",
-            "../16-bloom/shaders/basic-textured-hdr.frag"
-        );
-        skyboxShaders = std::make_unique<GLGraphicsShaders>(
-            "../16-bloom/shaders/skybox.vert",
-            "../16-bloom/shaders/skybox.frag"
-        );
+        mainShaders->reload();
+        basicColorShaders->reload();
+        hdrQuadShaders->reload();
+        skyboxShaders->reload();
 
         needRecreateShaders = false;
     }

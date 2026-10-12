@@ -178,33 +178,13 @@ void OpenGLRenderer::startRendering() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     if (needRecreateShaders) {
-        mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../18-ssao/shaders/blinn-phong.vert",
-                "../18-ssao/shaders/blinn-phong.frag"
-            );
-        basicColorShaders = std::make_unique<GLGraphicsShaders>(
-            "../18-ssao/shaders/basic-color.vert",
-            "../18-ssao/shaders/basic-color.frag"
-        );
-        hdrQuadShaders = std::make_unique<GLGraphicsShaders>(
-            "../18-ssao/shaders/final-combine-hdr.vert",
-            "../18-ssao/shaders/final-combine-hdr.frag"
-        );
-        skyboxShaders = std::make_unique<GLGraphicsShaders>(
-            "../18-ssao/shaders/skybox.vert",
-            "../18-ssao/shaders/skybox.frag"
-        );
-        prepassShaders = std::make_unique<GLGraphicsShaders>(
-            "../18-ssao/shaders/pre-pass.vert",
-            "../18-ssao/shaders/pre-pass.frag"
-        );
-        ssaoShaders = std::make_unique<GLGraphicsShaders>(
-            "../18-ssao/shaders/ssao.vert",
-            "../18-ssao/shaders/ssao.frag"
-        );
-        oneDimBlurShader = std::make_unique<GLComputeShader>(
-            "../18-ssao/shaders/1d-gaussian-blur.comp"
-        );
+        mainShaders->reload();
+        basicColorShaders->reload();
+        hdrQuadShaders->reload();
+        skyboxShaders->reload();
+        prepassShaders->reload();
+        ssaoShaders->reload();
+        oneDimBlurShader->reload();
 
         needRecreateShaders = false;
     }

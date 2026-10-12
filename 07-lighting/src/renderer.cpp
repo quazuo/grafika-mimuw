@@ -155,14 +155,8 @@ void OpenGLRenderer::tickInputEvents() {
     static bool wasPressedLastFrame = false;
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         if (!wasPressedLastFrame) {
-            mainShaders = std::make_unique<GLGraphicsShaders>(
-                "../07-lighting/shaders/blinn-phong.vert",
-                "../07-lighting/shaders/blinn-phong.frag"
-            );
-            basicColorShaders = std::make_unique<GLGraphicsShaders>(
-                "../07-lighting/shaders/basic-color.vert",
-                "../07-lighting/shaders/basic-color.frag"
-            );
+            mainShaders->reload();
+            basicColorShaders->reload();
         }
         wasPressedLastFrame = true;
     } else {
