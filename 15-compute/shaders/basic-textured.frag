@@ -7,5 +7,5 @@ out vec4 out_color;
 uniform sampler2D sampled_texture;
 
 void main() {
-    out_color = vec4(texture(sampled_texture, tex_coords * 0.25).r == 0 ? 0 : 1);
+    out_color = vec4(texture(sampled_texture, tex_coords /* * 0.25 */).r == 0 ? 0 : 1);
 }
