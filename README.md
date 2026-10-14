@@ -34,3 +34,13 @@ cd build
 ```
 
 As of writing these steps, running these programs from the `build` directory is essential (except for `1-window`). Programs that use shaders read them at runtime from specific relative paths which break when running the programs from other directories.
+
+## nix-shell
+
+If you don't wanna mess with your linux installation and wanna use `nix-shell` then there is `shell.nix` file in the root of this repo already waiting for you :)
+
+**Note on Wayland:** The application forces the X11 session backend for compatibility, so make sure you have `xwayland` installed if running on a Wayland compositor.
+
+As I am not a proper NixOS user (I use Arch BTW), feel free to make that file better ;)
+
+`shell.nix` provided with :heart: by **wapel37** with a help of Gemini and our great **quazuo**.
