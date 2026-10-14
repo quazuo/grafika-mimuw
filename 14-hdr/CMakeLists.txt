@@ -13,14 +13,8 @@ set(ALL_LIBS
 
 file(GLOB SOURCES
         "src/*"
-        "../utilities/*"
-        "../dependencies/stb/stb_image.cpp"
-        "../dependencies/tinyobjloader/tiny_obj_loader.cpp"
-        "../dependencies/imgui/*.cpp"
-        "../dependencies/imgui/backends/imgui_impl_glfw.cpp"
-        "../dependencies/imgui/backends/imgui_impl_opengl3.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
+target_link_libraries(${PROJECT_NAME} ${ALL_LIBS} utilities stb tinyobjloader imgui)

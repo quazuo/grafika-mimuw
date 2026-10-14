@@ -18,11 +18,6 @@ include_directories(
         dependencies/glew/include/
         dependencies/glfw/include/
         dependencies/glm/
-        dependencies/imgui/
-        dependencies/imgui/backends/
-        dependencies/tinyobjloader/
-        dependencies/stb/
-        utilities/
         .
 )
 
@@ -42,6 +37,8 @@ add_definitions(
 )
 
 add_subdirectory(dependencies)
+
+add_subdirectory(utilities)
 
 add_subdirectory(01-window)
 add_subdirectory(02-triangle)

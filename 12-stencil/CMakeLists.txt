@@ -13,11 +13,8 @@ set(ALL_LIBS
 
 file(GLOB SOURCES
         "src/*"
-        "../utilities/*"
-        "../dependencies/stb/stb_image.cpp"
-        "../dependencies/tinyobjloader/tiny_obj_loader.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
+target_link_libraries(${PROJECT_NAME} ${ALL_LIBS} utilities stb tinyobjloader)

@@ -13,10 +13,8 @@ set(ALL_LIBS
 
 file(GLOB SOURCES
         "src/*"
-        "../utilities/*"
-        "../dependencies/stb/stb_image.cpp"
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
+target_link_libraries(${PROJECT_NAME} ${ALL_LIBS} utilities stb)

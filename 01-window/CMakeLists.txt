@@ -13,9 +13,8 @@ set(ALL_LIBS
 
 file(GLOB SOURCES
         "src/*"
-        "../utilities/*"
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${ALL_LIBS} utilities)
