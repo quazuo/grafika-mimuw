@@ -29,12 +29,12 @@ pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
     libxkbcommon
 
     # Biblioteki systemowe X11
-    xorg.libX11
-    xorg.libXrandr
-    xorg.libXinerama
-    xorg.libXcursor
-    xorg.libXi
-    xorg.libXext
+    libx11
+    libxrandr
+    libxinerama
+    libxcursor
+    libxi
+    libxext
 
     # nixGL
     nixgl.auto.nixGLDefault
@@ -50,12 +50,12 @@ pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } {
       pkgs.glew
       pkgs.glfw
       pkgs.freeglut
-      pkgs.xorg.libX11
-      pkgs.xorg.libXcursor
-      pkgs.xorg.libXrandr
-      pkgs.xorg.libXinerama
-      pkgs.xorg.libXi
-      pkgs.xorg.libXext
+      pkgs.libx11
+      pkgs.libxcursor
+      pkgs.libxrandr
+      pkgs.libxinerama
+      pkgs.libxi
+      pkgs.libxext
     ]}:$LD_LIBRARY_PATH"
 
     # Wymuszenie nakładki backendu X11 dla GLFW/FreeGLUT
