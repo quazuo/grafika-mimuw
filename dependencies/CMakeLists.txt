@@ -14,11 +14,6 @@ add_definitions(
 
 add_subdirectory(glfw)
 
-include_directories(
-        glfw/include/GLFW/
-        glew/include/
-)
-
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(OPENGL_LIBRARY
             ${OPENGL_LIBRARY}
@@ -41,6 +36,10 @@ set(GLEW_HEADERS)
 add_library(glew STATIC
         ${GLEW_SOURCE}
         ${GLEW_INCLUDE}
+)
+
+target_include_directories(glew PUBLIC
+	glew/include/
 )
 
 target_link_libraries(glew
