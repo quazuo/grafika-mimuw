@@ -4,6 +4,8 @@ add_library(utilities STATIC
 	gl-shader.cpp
 )
 
+target_link_libraries(utilities PUBLIC glew)
+
 target_include_directories(utilities PUBLIC
 	.
 )
