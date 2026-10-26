@@ -2,7 +2,8 @@
 
 in vec3 position;
 in vec2 tex_coords;
-in mat3 TBN;
+in vec3 normal;
+in vec3 tangent;
 
 out vec4 out_color;
 
@@ -36,10 +37,18 @@ struct PointLight {
 uniform DirectionalLight directional_light;
 uniform PointLight point_lights[POINT_LIGHT_COUNT];
 
+mat3 TBN() {
+    vec3 N = normalize(normal);
+    vec3 T = normalize(tangent);
+    T = normalize(T - dot(T, N) * N); // use the gram-schmidt process to re-orthogonalize the TBN vectors
+    vec3 B = cross(N, T);
+    return mat3(T, B, N);
+}
+
 vec2 calc_directional_light() {
     vec3 normal = texture(normal_texture, tex_coords).rgb;
     normal = normal * 2.0 - 1.0; // [0,1] -> [-1,1]
-    normal = TBN * normal; // tangent space -> world space
+    normal = TBN() * normal; // tangent space -> world space
 
     vec3 light_direction = normalize(-directional_light.direction);
     vec3 view_direction = normalize(camera_position - position);
@@ -54,7 +63,7 @@ vec2 calc_directional_light() {
 vec2 calc_point_light(uint index) {
     vec3 normal = texture(normal_texture, tex_coords).rgb;
     normal = normal * 2.0 - 1.0; // [0,1] -> [-1,1]
-    normal = TBN * normal; // tangent space -> world space
+    normal = TBN() * normal; // tangent space -> world space
 
     vec3 light_direction = normalize(point_lights[index].position - position);
     vec3 view_direction = normalize(camera_position - position);
@@ -76,7 +85,7 @@ vec3 calc_reflected_color() {
 
     vec3 normal = texture(normal_texture, tex_coords).rgb;
     normal = normal * 2.0 - 1.0; // [0,1] -> [-1,1]
-    normal = TBN * normal; // tangent space -> world space
+    normal = TBN() * normal; // tangent space -> world space
 
     vec3 reflected_color = texture(skybox_texture, -reflect(view_direction, normal)).rgb;
     return reflected_color;
@@ -96,11 +105,11 @@ void main() {
     vec3 diffuse  = directional_light_factors.x * directional_light.color;
     vec3 specular = directional_light_factors.y * directional_light.color;
 
-//    for (uint point_light_index = 0; point_light_index < POINT_LIGHT_COUNT; point_light_index++) {
-//        vec2 point_light_factors = calc_point_light(point_light_index);
-//        diffuse  += point_light_factors.x * point_lights[point_light_index].color;
-//        specular += point_light_factors.y * point_lights[point_light_index].color;
-//    }
+    for (uint point_light_index = 0; point_light_index < POINT_LIGHT_COUNT; point_light_index++) {
+        vec2 point_light_factors = calc_point_light(point_light_index);
+        diffuse  += point_light_factors.x * point_lights[point_light_index].color;
+        specular += point_light_factors.y * point_lights[point_light_index].color;
+    }
 
     diffuse *= base_color;
 

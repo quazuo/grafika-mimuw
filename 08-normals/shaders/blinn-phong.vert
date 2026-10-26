@@ -8,7 +8,8 @@ layout (location = 4) in vec3 in_bitangent;
 
 out vec3 position;
 out vec2 tex_coords;
-out mat3 TBN;
+out vec3 normal;
+out vec3 tangent;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -20,9 +21,9 @@ void main() {
     position = vec3(model * vec4(in_position, 1.0));
     tex_coords = in_tex_coords;
 
+    // the normal matrix can be computed on the CPU and passed in as uniform to make it more efficient;
+    // but we'll keep it here so that everything is in one spot
     mat3 normal_matrix = mat3(transpose(inverse(model)));
-    vec3 T = normalize(normal_matrix * in_tangent);
-    vec3 B = normalize(normal_matrix * in_bitangent);
-    vec3 N = normalize(normal_matrix * in_normal);
-    TBN = mat3(T, B, N);
+    tangent = normalize(mat3(model) * in_tangent);
+    normal = normalize(normal_matrix * in_normal);
 }
