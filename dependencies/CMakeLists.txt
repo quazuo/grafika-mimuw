@@ -14,11 +14,6 @@ add_definitions(
 
 add_subdirectory(glfw)
 
-include_directories(
-        glfw/include/GLFW/
-        glew/include/
-)
-
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(OPENGL_LIBRARY
             ${OPENGL_LIBRARY}
@@ -43,7 +38,48 @@ add_library(glew STATIC
         ${GLEW_INCLUDE}
 )
 
+target_include_directories(glew PUBLIC
+	glew/include/
+)
+
 target_link_libraries(glew
         ${OPENGL_LIBRARY}
         ${EXTRA_LIBS}
+)
+
+### IMGUI ###
+
+add_library(imgui STATIC
+        imgui/imgui.cpp
+        imgui/imgui_demo.cpp
+        imgui/imgui_draw.cpp
+        imgui/imgui_tables.cpp
+        imgui/imgui_widgets.cpp
+        imgui/backends/imgui_impl_glfw.cpp
+        imgui/backends/imgui_impl_opengl3.cpp
+)
+
+target_include_directories(imgui PUBLIC
+        imgui
+        imgui/backends
+)
+
+### STB ###
+
+add_library(stb STATIC
+        stb/stb_image.cpp
+)
+
+target_include_directories(stb PUBLIC
+        stb
+)
+
+### TinyObjLoader ###
+
+add_library(tinyobjloader STATIC
+        tinyobjloader/tiny_obj_loader.cpp
+)
+
+target_include_directories(tinyobjloader PUBLIC
+        tinyobjloader
 )
