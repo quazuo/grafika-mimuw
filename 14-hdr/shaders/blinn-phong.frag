@@ -90,7 +90,7 @@ vec3 calc_reflected_color() {
 void main() {
     vec3 base_color = texture(color_texture, tex_coords).rgb;
 
-    const float ambient_factor = 0.03f;
+    const float ambient_factor = 0.1f;
 
     vec2 directional_light_factors = calc_directional_light();
 

@@ -34,7 +34,7 @@ vec3 calc_directional_light() {
     vec3 view_direction = normalize(camera_position - position);
     vec3 reflect_direction = normalize(reflect(-light_direction, normal));
 
-    float ambient_factor = 0.03f;
+    float ambient_factor = 0.1f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
     float specular_factor = pow(max(dot(view_direction, reflect_direction), 0.0f), 32.0f);
 
@@ -57,7 +57,7 @@ vec3 calc_point_light() {
                                 + point_light.att_linear * distance
                                 + point_light.att_quadratic * distance * distance);
 
-    float ambient_factor = 0.03f;
+    float ambient_factor = 0.1f;
     float diffuse_factor = max(dot(normal, light_direction), 0.0f);
     float specular_factor = pow(max(dot(view_direction, reflect_direction), 0.0f), 32.0f);
 
