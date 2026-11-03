@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 GLShaders::GLShaders() {
     programID = glCreateProgram();

@@ -16,15 +16,14 @@ find_package(OpenGL REQUIRED)
 
 include_directories(
         dependencies/glm/
+        dependencies/glfw/include/
         .
 )
 
 set(ALL_LIBS
         ${OPENGL_LIBRARY}
         glfw
-        #GLEW_1130
         glew
-        ${libnoise}
 )
 
 add_definitions(
