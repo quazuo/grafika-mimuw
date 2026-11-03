@@ -62,6 +62,51 @@ const std::vector<BasicVertex> cubeVertices{
     {{-1.0f,  1.0f, -1.0f}},
 };
 
+const std::vector<MeshVertex> stoneWallVertices{
+    MeshVertex {
+        .position = { 0.0, 0.0, 0.0 },
+        .tex_coords = { 0.0, 1.0 },
+        .normal = { 0.0, 0.0, 1.0 },
+        .tangent = { 1.0, 0.0, 0.0 },
+        .bitangent = { 0.0, 1.0, 0.0 },
+    },
+    MeshVertex {
+        .position = { 1.0, 0.0, 0.0 },
+        .tex_coords = { 1.0, 1.0 },
+        .normal = { 0.0, 0.0, 1.0 },
+        .tangent = { 1.0, 0.0, 0.0 },
+        .bitangent = { 0.0, 1.0, 0.0 },
+    },
+    MeshVertex {
+        .position = { 1.0, 1.0, 0.0 },
+        .tex_coords = { 1.0, 0.0 },
+        .normal = { 0.0, 0.0, 1.0 },
+        .tangent = { 1.0, 0.0, 0.0 },
+        .bitangent = { 0.0, 1.0, 0.0 },
+    },
+    MeshVertex {
+        .position = { 0.0, 0.0, 0.0 },
+        .tex_coords = { 0.0, 1.0 },
+        .normal = { 0.0, 0.0, 1.0 },
+        .tangent = { 1.0, 0.0, 0.0 },
+        .bitangent = { 0.0, 1.0, 0.0 },
+    },
+    MeshVertex {
+        .position = { 1.0, 1.0, 0.0 },
+        .tex_coords = { 1.0, 0.0 },
+        .normal = { 0.0, 0.0, 1.0 },
+        .tangent = { 1.0, 0.0, 0.0 },
+        .bitangent = { 0.0, 1.0, 0.0 },
+    },
+    MeshVertex {
+        .position = { 0.0, 1.0, 0.0 },
+        .tex_coords = { 0.0, 0.0 },
+        .normal = { 0.0, 0.0, 1.0 },
+        .tangent = { 1.0, 0.0, 0.0 },
+        .bitangent = { 0.0, 1.0, 0.0 },
+    },
+};
+
 OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -134,12 +179,15 @@ OpenGLRenderer::~OpenGLRenderer() {
 
     const std::vector usedVertexArrays {
         loadedMesh.vao,
+        stoneWallMesh.vao,
         cubeMesh.vao,
     };
 
     const std::vector usedTextures {
-        colorTextureID,
-        normalTextureID,
+        helmetTextureIDs.baseColor,
+        helmetTextureIDs.normal,
+        stoneWallTextureIDs.baseColor,
+        stoneWallTextureIDs.normal,
     };
 
     glDeleteBuffers(static_cast<GLsizei>(usedBuffers.size()), usedBuffers.data());
@@ -206,27 +254,51 @@ void OpenGLRenderer::render() {
         glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
     }
 
+    mainShaders->enable();
+
+    mainShaders->setUniform("view", camera->getViewMatrix());
+    mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
+
+    mainShaders->setUniform("camera_position", camera->getPosition());
+
+    mainShaders->setUniform("directional_light.direction", directionalLightDirection);
+    mainShaders->setUniform("directional_light.color", directionalLightColor);
+
+    mainShaders->setUniform("point_light.position", lightCubePosition);
+    mainShaders->setUniform("point_light.color", pointLightColor);
+    mainShaders->setUniform("point_light.att_constant", 1.0f);
+    mainShaders->setUniform("point_light.att_linear", 0.22f);
+    mainShaders->setUniform("point_light.att_quadratic", 0.2f);
+
+    {
+        glBindVertexArray(stoneWallMesh.vao);
+
+        const auto model = glm::translate(
+            glm::scale(
+                glm::rotate(
+                    glm::identity<glm::mat4>(),
+                    glm::radians(45.0f),
+                    glm::vec3(0.0f, 1.0f, 0.0f)
+                ),
+                glm::vec3(2.0f)
+            ),
+            glm::vec3(0.0f, 3.0f, 0.0f)
+        );
+        mainShaders->setUniform("model", model);
+
+        mainShaders->setUniform("color_texture", 2);
+        mainShaders->setUniform("normal_texture", 3);
+
+        glDrawArrays(GL_TRIANGLES, 0, cubeVertices.size());
+    }
+
     {
         glBindVertexArray(loadedMesh.vao);
-        mainShaders->enable();
 
         mainShaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(2.0f)));
-        mainShaders->setUniform("view", camera->getViewMatrix());
-        mainShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
         mainShaders->setUniform("color_texture", 0);
         mainShaders->setUniform("normal_texture", 1);
-
-        mainShaders->setUniform("camera_position", camera->getPosition());
-
-        mainShaders->setUniform("directional_light.direction", directionalLightDirection);
-        mainShaders->setUniform("directional_light.color", directionalLightColor);
-
-        mainShaders->setUniform("point_light.position", lightCubePosition);
-        mainShaders->setUniform("point_light.color", pointLightColor);
-        mainShaders->setUniform("point_light.att_constant", 1.0f);
-        mainShaders->setUniform("point_light.att_linear", 0.22f);
-        mainShaders->setUniform("point_light.att_quadratic", 0.2f);
 
         glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
     }
@@ -301,6 +373,65 @@ void OpenGLRenderer::prepareBuffers() {
     );
     glEnableVertexAttribArray(4);
 
+    // stone wall mesh
+
+    glGenVertexArrays(1, &stoneWallMesh.vao);
+    glBindVertexArray(stoneWallMesh.vao);
+
+    glGenBuffers(1, &stoneWallMesh.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, stoneWallMesh.vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(MeshVertex) * stoneWallVertices.size(), stoneWallVertices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, position))
+    );
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(
+        1,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, tex_coords))
+    );
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(
+        2,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, normal))
+    );
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(
+        3,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, tangent))
+    );
+    glEnableVertexAttribArray(3);
+
+    glVertexAttribPointer(
+        4,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(MeshVertex),
+        reinterpret_cast<void *>(offsetof(MeshVertex, bitangent))
+    );
+    glEnableVertexAttribArray(4);
+
     // light cube mesh
 
     glGenVertexArrays(1, &cubeMesh.vao);
@@ -324,7 +455,7 @@ void OpenGLRenderer::prepareBuffers() {
 void OpenGLRenderer::loadTextures() {
     stbi_set_flip_vertically_on_load(true);
 
-    // color texture
+    // helmet color texture
     {
         int width, height, channelCount;
         unsigned char *data = stbi_load("../assets/helmet/albedo.png", &width, &height, &channelCount, 0);
@@ -332,9 +463,9 @@ void OpenGLRenderer::loadTextures() {
             throw std::runtime_error("failed to load texture!");
         }
 
-        glGenTextures(1, &colorTextureID);
+        glGenTextures(1, &helmetTextureIDs.baseColor);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, colorTextureID);
+        glBindTexture(GL_TEXTURE_2D, helmetTextureIDs.baseColor);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -347,7 +478,7 @@ void OpenGLRenderer::loadTextures() {
         stbi_image_free(data);
     }
 
-    // normal texture
+    // helmet normal texture
     {
         int width, height, channelCount;
         unsigned char *data = stbi_load("../assets/helmet/normal.png", &width, &height, &channelCount, 0);
@@ -355,9 +486,55 @@ void OpenGLRenderer::loadTextures() {
             throw std::runtime_error("failed to load texture!");
         }
 
-        glGenTextures(1, &normalTextureID);
+        glGenTextures(1, &helmetTextureIDs.normal);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, normalTextureID);
+        glBindTexture(GL_TEXTURE_2D, helmetTextureIDs.normal);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
+    }
+
+    // stone wall color texture
+    {
+        int width, height, channelCount;
+        unsigned char *data = stbi_load("../assets/stone_wall/base_color.png", &width, &height, &channelCount, 0);
+        if (!data) {
+            throw std::runtime_error("failed to load texture!");
+        }
+
+        glGenTextures(1, &stoneWallTextureIDs.baseColor);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, stoneWallTextureIDs.baseColor);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
+    }
+
+    // stone wall normal texture
+    {
+        int width, height, channelCount;
+        unsigned char *data = stbi_load("../assets/stone_wall/normal.png", &width, &height, &channelCount, 0);
+        if (!data) {
+            throw std::runtime_error("failed to load texture!");
+        }
+
+        glGenTextures(1, &stoneWallTextureIDs.normal);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, stoneWallTextureIDs.normal);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

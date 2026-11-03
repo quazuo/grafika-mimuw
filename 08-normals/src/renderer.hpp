@@ -25,10 +25,16 @@ class OpenGLRenderer {
     std::vector<MeshVertex> loadedMeshVertices;
     std::vector<GLuint> loadedMeshIndices;
     Mesh loadedMesh;
+    Mesh stoneWallMesh;
     Mesh cubeMesh;
 
-    GLuint colorTextureID;
-    GLuint normalTextureID;
+    struct ModelTextureIDs {
+        GLuint baseColor;
+        GLuint normal;
+    };
+
+    ModelTextureIDs helmetTextureIDs;
+    ModelTextureIDs stoneWallTextureIDs;
 
     // camera stuff won't change too much; we're moving it to a separate class to avoid clutter
     std::unique_ptr<Camera> camera;
