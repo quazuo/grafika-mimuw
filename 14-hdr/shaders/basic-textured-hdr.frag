@@ -18,7 +18,10 @@ void main() {
     tone_mapped = vec3(1.0) - exp(-hdr_color * exposure);
 
     // gamma correction
-    vec3 gamma_corrected = pow(tone_mapped, vec3(1.0 / gamma));
+    // (this is actually done automatically, and more correctly because we called glEnable(GL_FRAMEBUFFER_SRGB) on the CPU)
+    //
+    // const float gamma = 2.2;
+    // vec3 gamma_corrected = pow(tone_mapped, vec3(1.0 / gamma));
 
-    out_color = vec4(gamma_corrected, 1.0);
+    out_color = vec4(tone_mapped, 1.0);
 }

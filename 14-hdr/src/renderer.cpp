@@ -111,6 +111,9 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    // enable gamma correction when writing to the framebuffer
+    glEnable(GL_FRAMEBUFFER_SRGB);
+
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
     glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(&debugCallback), nullptr);
@@ -351,6 +354,9 @@ void OpenGLRenderer::render() {
     }
 
     {
+        // just for the GUI, disable gamma correction, as ImGui already writes gamma corrected values
+        glDisable(GL_FRAMEBUFFER_SRGB);
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -389,6 +395,8 @@ void OpenGLRenderer::render() {
         ImGui::EndFrame();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glEnable(GL_FRAMEBUFFER_SRGB);
     }
 }
 
