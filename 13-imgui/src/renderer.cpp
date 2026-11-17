@@ -112,24 +112,9 @@ OpenGLRenderer::OpenGLRenderer(const int windowWidth, const int windowHeight) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glEnable(GL_STENCIL_TEST);
-
-    // this is already set by default, hence doing this just for presentation purposes
     glStencilMask(0xFF);
-
-    // in summary: fragment passes iff: `(current_stencil_value & 0xFF) == (1 & 0xFF)`.
-    // the `& 0xFF` are redundant (as we're working with one-byte values anyway), so it can be reduced to just `current_stencil_value == 1`.
-    glStencilFunc(
-        GL_EQUAL,   // fragment passes the stencil test iff the corresponding value in the stencil buffer EQUALS the next argument
-        1,          // the value which is compared with values in the stencil buffer
-        0xFF        // mask applied (AND) to both compared values
-    );
-
-    // this is already set by default, hence doing this just for presentation purposes
-    glStencilOp(
-        GL_KEEP,    // what to do if the stencil test fails? (keep the previous value; don't change it)
-        GL_KEEP,    // what to do if the stencil test passes, but the depth test fails?
-        GL_KEEP     // what to do if both tests pass?
-    );
+    glStencilFunc(GL_EQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
     glEnable(GL_DEBUG_OUTPUT);
 #ifndef __APPLE__
@@ -296,40 +281,29 @@ void OpenGLRenderer::render() {
         mainShaders->setUniform("point_light.att_linear", 0.22f);
         mainShaders->setUniform("point_light.att_quadratic", 0.2f);
 
-        // first we'll render the object as normal; but we will set the stencil values in corresponding pixels to 1
-        // to remember where the object was on the screen:
-
         glEnable(GL_STENCIL_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // replace the 0s in the stencil buffers whenever we successfully draw a pixel of the mesh
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);          // all pixels will pass the test; also the new value will be 1
-        glStencilMask(0xFF);                        // enable writing to the stencil buffer
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
 
-        glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0); // just draw the object
+        glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
 
-        // second, we'll use the values in the stencil buffer to render an outline.
-        // the "outline" will just be the same mesh rendered again, but slightly enlarged and set to a single color.
-        // finally, we'll discard fragments which have a corresponding stencil value of 1, as that's where the mesh was already drawn.
-        // remember -- an outline is *around* the object, it shouldn't overwrite any work we've done with the previous draw call!
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glDepthFunc(GL_ALWAYS);
 
-        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);     // don't change the stencil buffer in any way, we're just reading from it
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);        // only pixels NOT equal to 1 will pass the test
-        glStencilMask(0x00);                        // disable writing to the stencil buffer -- this time we only want to read from it
-        glDepthFunc(GL_ALWAYS);                     // ignore depth when drawing the outline (we want to see it through walls e.g.) but still write it!
-
-        outlineShaders->enable(); // use shaders which don't do any interesting shading; just set a constant color
+        outlineShaders->enable();
 
         const float outlineMeshScale = meshScale * (1.0f + outlineWidth);
-        outlineShaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(outlineMeshScale))); // enlarge the object a bit
+        outlineShaders->setUniform("model", glm::scale(glm::identity<glm::mat4>(), glm::vec3(outlineMeshScale)));
         outlineShaders->setUniform("view", camera->getViewMatrix());
         outlineShaders->setUniform("projection", camera->getPerspectiveMatrix());
 
         outlineShaders->setUniform("color", glm::vec4(1, 1, 0, 1));
         
-        glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0); // draw the outline
+        glDrawElements(GL_TRIANGLES, loadedMeshIndices.size(), GL_UNSIGNED_INT, 0);
 
-        glDepthFunc(GL_LEQUAL);             // bring back the default depth function
-        glDisable(GL_STENCIL_TEST);         // we don't need stencil testing anymore in later draws
-        glStencilMask(0xFF);                // bring back the default mask, so that `glClear` can properly clear the stencil buffer
+        glDepthFunc(GL_LEQUAL);
+        glDisable(GL_STENCIL_TEST);
     }
 
     {
