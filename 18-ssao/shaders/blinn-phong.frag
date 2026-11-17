@@ -101,6 +101,7 @@ void main() {
 
     vec2 directional_light_factors = calc_directional_light();
 
+    // try raising `ambient_occlusion` to a power (say, 2) to make it stand out more
     vec3 ambient  = ambient_factor * ambient_occlusion * base_color;
     vec3 diffuse  = directional_light_factors.x * directional_light.color;
     vec3 specular = directional_light_factors.y * directional_light.color;
