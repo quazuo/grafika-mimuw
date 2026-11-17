@@ -740,7 +740,7 @@ void OpenGLRenderer::createSsaoResources() {
         float scale = static_cast<float>(i) / 64.0f;
         scale   = std::lerp(0.1f, 1.0f, scale * scale);
         sample *= scale;
-    }
+    d}
 
     // noise texture
     

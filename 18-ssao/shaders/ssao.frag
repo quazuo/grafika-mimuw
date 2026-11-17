@@ -19,12 +19,14 @@ uniform ivec2 window_size;
 
 void main() {
     vec3 frag_pos = texture(g_position, tex_coords).xyz;
-    vec3 normal = normalize(texture(g_normal, tex_coords).xyz);
+    vec3 normal = texture(g_normal, tex_coords).xyz;
 
     if (normal == vec3(0)) {
-        out_ssao = vec4(0);
+        out_ssao = vec4(1);
         return;
     }
+
+    normal = normalize(normal);
 
     vec2 noise_scale = vec2(window_size) / 4.0;
     vec3 random_vec = texture(sample_noise, tex_coords * noise_scale).xyz;
@@ -43,7 +45,9 @@ void main() {
         sample_clip_pos.xyz /= sample_clip_pos.w;
         sample_clip_pos.xyz = sample_clip_pos.xyz * 0.5 + 0.5;
 
-        float sample_depth = texture(g_position, sample_clip_pos.xy).z;
+        vec4 sample_data = texture(g_position, sample_clip_pos.xy);
+        if (sample_data.w == 0.0f) continue;
+        float sample_depth = sample_data.z;
 
         float range_check = smoothstep(0.0, 1.0, radius / abs(frag_pos.z - sample_depth));
 
